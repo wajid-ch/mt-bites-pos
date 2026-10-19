@@ -1,0 +1,123 @@
+﻿category,product_name,variant,price_pkr,description,needs_confirmation
+Burgers,Zinger Burger,,330,,False
+Burgers,Zinger with Cheese,,400,,False
+Burgers,Chicken Patty,,280,,False
+Burgers,Chicken Patty Cheese,,350,,False
+Burgers,Fish Burger,,500,,False
+Burgers,Fish with Cheese,,600,,False
+Burgers,Zinger Mighty,,800,2 piece zinger with cheese slice,False
+Burgers,Double Decker,,750,One chicken patty & zinger,False
+Burgers,Tikka Burger,,250,Tikka chicken with sauce,False
+Burgers,Steak Burger,,500,Tender breast with sauce,False
+Fries & Sides,Plain Fries,Small,200,,False
+Fries & Sides,Plain Fries,Large,400,,False
+Fries & Sides,Chicken Fries,Small,280,,False
+Fries & Sides,Chicken Fries,Large,550,,False
+Fries & Sides,Cheese Fries,,450,Served with special cheese,False
+Fries & Sides,Loaded Fries,,450,Chicken & cheese with sauce,False
+Fries & Sides,Masala Fries,,450,MT special masala,False
+Fries & Sides,Garlic Mayo Fries,,450,,False
+Fries & Sides,M.T. Bites Special Fries,,500,"Served with special chicken, cheese & sauce",False
+Classic Pizza,Tikka Pizza,Small,650,,False
+Classic Pizza,Tikka Pizza,Medium,999,,False
+Classic Pizza,Tikka Pizza,Large,1400,,False
+Classic Pizza,Tikka Pizza,XL,1800,,False
+Classic Pizza,Fajita Pizza,Small,650,,False
+Classic Pizza,Fajita Pizza,Medium,999,,False
+Classic Pizza,Fajita Pizza,Large,1400,,False
+Classic Pizza,Fajita Pizza,XL,1800,,False
+Classic Pizza,BBQ Pizza,Small,700,,False
+Classic Pizza,BBQ Pizza,Medium,1050,,False
+Classic Pizza,BBQ Pizza,Large,1499,,False
+Classic Pizza,BBQ Pizza,XL,1899,,False
+Classic Pizza,Hot N Spicy Pizza,Small,700,,False
+Classic Pizza,Hot N Spicy Pizza,Medium,1050,,False
+Classic Pizza,Hot N Spicy Pizza,Large,1499,,False
+Classic Pizza,Hot N Spicy Pizza,XL,1899,,False
+Classic Pizza,Achaari Pizza,Small,700,,False
+Classic Pizza,Achaari Pizza,Medium,1050,,False
+Classic Pizza,Achaari Pizza,Large,1499,,False
+Classic Pizza,Achaari Pizza,XL,1899,,False
+Classic Pizza,Supreme Pizza,Small,700,,False
+Classic Pizza,Supreme Pizza,Medium,1050,,False
+Classic Pizza,Supreme Pizza,Large,1499,,False
+Classic Pizza,Supreme Pizza,XL,1899,,False
+Classic Pizza,M.T. Bites Special Pizza,Small,750,,False
+Classic Pizza,M.T. Bites Special Pizza,Medium,1150,,False
+Classic Pizza,M.T. Bites Special Pizza,Large,1550,,False
+Classic Pizza,M.T. Bites Special Pizza,XL,1950,,False
+Special Pizza,Cheese Stuff Pizza,Medium,1199,"Special cheese, malai boti, chicken, vegetables & green olives",False
+Special Pizza,Cheese Stuff Pizza,Large,1699,"Special cheese, malai boti, chicken, vegetables & green olives",False
+Special Pizza,Crown Crust Pizza,Medium,1199,"Kabab, chicken, vegetables & black olives",False
+Special Pizza,Crown Crust Pizza,Large,1699,"Kabab, chicken, vegetables & black olives",False
+Special Pizza,Bihari Kabab Pizza,Medium,1199,"Special kabab, chicken, vegetables, black olives & sweet corn",False
+Special Pizza,Bihari Kabab Pizza,Large,1699,"Special kabab, chicken, vegetables, black olives & sweet corn",False
+Special Pizza,Kabab Crust Pizza,Medium,1199,"Kabab, chicken, vegetables & black olives",False
+Special Pizza,Kabab Crust Pizza,Large,1699,"Kabab, chicken, vegetables & black olives",False
+Special Pizza,M.T. Special Doner Pizza,Medium,1299,"Double filling, chicken, cube vegetables, olives & pineapple",False
+Special Pizza,M.T. Special Doner Pizza,Large,1799,"Double filling, chicken, cube vegetables, olives & pineapple",False
+Pizza Deals,Buy One Get One Free Pizza,Medium,1699,"Choose from Tikka, Fajita, Supreme, Hot N Spicy, Achaari; two pizzas",False
+Pizza Deals,Buy One Get One Free Pizza,Large,2499,"Choose from Tikka, Fajita, Supreme, Hot N Spicy, Achaari; two pizzas",False
+Combo Deals,M.T Special Deal 1,,899,2 Burgers + Fries + Drink,False
+Combo Deals,M.T Special Deal 2,,750,2 Fried Pieces + Fries + Drink,False
+Combo Deals,M.T Special Deal 3,,950,10 pcs Wings + Fries + Drink,False
+Combo Deals,M.T Special Deal 4,,1350,3 Zingers + Large Fries + Drink (500ml),False
+Combo Deals,M.T Special Deal 5,,1630,3 Zingers + 2 Fried Pieces + Fries + 3 Drinks,False
+Combo Deals,M.T Special Deal 6,,1999,5 Zingers + Large Fries + 1.5 Liter Drink,False
+Combo Deals,M.T Special Deal 7,,750,2 Zinger Rolls + 2 Drinks,False
+Combo Deals,Snack Box,,1099,Strips + Wing + Fried Piece,False
+Combo Deals,Family Deal 1,,1699,1 Small Pizza + 2 Zingers + Fries + 2 Drinks,False
+Combo Deals,Family Deal 2,,2450,1 Large Pizza + 2 Burgers + 2 Fries + Drink,False
+Combo Deals,Large Combo 1,,2999,2 Medium Pizzas + 4 Fried Pieces + Large Fries + 1.5L Bottle,False
+Combo Deals,Large Combo 2,,4499,2 Large Pizzas + 5 Zingers + Large Fries + 2L Drink,False
+Combo Deals,Birthday Deal,,4999,2 Large Pizzas + 4 Zingers + 10 pcs Wings + Molten Lava Cake + 2 x 1.5L Drinks,False
+Drinks & Shakes,Fresh Lime,,200,,False
+Drinks & Shakes,Mint Margarita,,250,,False
+Drinks & Shakes,Sunset Lagoon,,350,,False
+Drinks & Shakes,Strawberry Margarita,,300,,False
+Drinks & Shakes,Sweet Lassi / Salty Lassi,,250,,False
+Drinks & Shakes,Mango Lassi,,350,,False
+Drinks & Shakes,Mango Shake,,300,,False
+Drinks & Shakes,Strawberry Shake,,350,,False
+Drinks & Shakes,Apple Shake,,250,,False
+Drinks & Shakes,Apple + Banana Shake,,280,,False
+Drinks & Shakes,Pineapple Shake,,350,,False
+Ice Cream Shakes,Vanilla / Chocolate Ice Cream Shake,,350,,False
+Ice Cream Shakes,Oreo Shake / Kit Kat Shake,,400,,False
+Ice Cream Shakes,Date Shake / Super Mix Shake,,450,,False
+MT Sips & Bites,Chai (Matka or cup),,100,,False
+MT Sips & Bites,Green Tea,,50,,False
+MT Sips & Bites,Chai with Paratha,,200,,False
+Desserts,Molten Lava Cake,,299,,False
+Desserts,Molten Lava Cake with Ice Cream,,399,,False
+Desserts,Kunafe Cake with Ice Cream,,450,,False
+Wings,Crispy Wings,10 pcs,700,,False
+Wings,BBQ Wings,10 pcs,800,Sauce glazed wings,False
+Wings,Cheezious Wings,10 pcs,1000,Shredded with special cheese,False
+Wings,Special Wings,10 pcs,900,Served with special sauce,False
+Snacks,Chicken Nuggets,Option 1,500,,True
+Snacks,Chicken Nuggets,Option 2,950,,True
+Snacks,Fried Piece,,250,1 pc,False
+Snacks,Fried Pieces,,999,4 pcs with bottle,False
+Snacks,Fried Pieces,,1999,9 pcs with bottle,False
+Snacks,Finger Fish,,999,5 pcs with fries,False
+Snacks,Finger Fish,,1999,10 pcs with fries,False
+Snacks,Chicken Strips,,600,5 pcs,False
+Shawarma & Wraps,Chicken Shawarma,Small,180,,False
+Shawarma & Wraps,Chicken Shawarma,Large,260,,False
+Shawarma & Wraps,Chicken Cheese Shawarma,Small,230,,False
+Shawarma & Wraps,Chicken Cheese Shawarma,Large,300,,False
+Shawarma & Wraps,Wrap Roll,,500,"Tortilla bread, chicken steak cubes, sauce & pickle",False
+Shawarma & Wraps,Zingratha Roll,,350,,False
+Shawarma & Wraps,Zingratha Cheese Roll,,420,,False
+Shawarma & Wraps,Spin Rolls,,450,4 pcs,False
+Fish,Fish Fry,,1300,,True
+Fish,Fish Grill,,1500,,True
+Fish,Fish Tikka,,1600,12 pcs,False
+BBQ,Chicken Boti,,130,1 seekh,False
+BBQ,Malai Boti,,1200,12 pcs,False
+BBQ,Reshmi Seekh Kabab,,1400,4 pcs,False
+BBQ,Leg Piece,,350,,False
+BBQ,Chest Piece,,400,,False
+BBQ,Rajasthani Tikka,,1100,4 pcs,False
+Special Platters,M.T. Special Platter,,1899,"Rice with 2 pcs Malai Boti, 2 Chicken Boti, 2 Kababs and 1 pc Rajasthani Tikka",False

@@ -1,0 +1,983 @@
+{
+  "restaurant": "MT Bites",
+  "currency": "PKR",
+  "source": "Menu photographs provided by client; review ambiguous items before production",
+  "menu_items": [
+    {
+      "category": "Burgers",
+      "product_name": "Zinger Burger",
+      "variant": "",
+      "price_pkr": 330,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Zinger with Cheese",
+      "variant": "",
+      "price_pkr": 400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Chicken Patty",
+      "variant": "",
+      "price_pkr": 280,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Chicken Patty Cheese",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Fish Burger",
+      "variant": "",
+      "price_pkr": 500,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Fish with Cheese",
+      "variant": "",
+      "price_pkr": 600,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Zinger Mighty",
+      "variant": "",
+      "price_pkr": 800,
+      "description": "2 piece zinger with cheese slice",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Double Decker",
+      "variant": "",
+      "price_pkr": 750,
+      "description": "One chicken patty & zinger",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Tikka Burger",
+      "variant": "",
+      "price_pkr": 250,
+      "description": "Tikka chicken with sauce",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Burgers",
+      "product_name": "Steak Burger",
+      "variant": "",
+      "price_pkr": 500,
+      "description": "Tender breast with sauce",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Plain Fries",
+      "variant": "Small",
+      "price_pkr": 200,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Plain Fries",
+      "variant": "Large",
+      "price_pkr": 400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Chicken Fries",
+      "variant": "Small",
+      "price_pkr": 280,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Chicken Fries",
+      "variant": "Large",
+      "price_pkr": 550,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Cheese Fries",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "Served with special cheese",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Loaded Fries",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "Chicken & cheese with sauce",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Masala Fries",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "MT special masala",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "Garlic Mayo Fries",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "M.T. Bites Special Fries",
+      "variant": "",
+      "price_pkr": 500,
+      "description": "Served with special chicken, cheese & sauce",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Tikka Pizza",
+      "variant": "Small",
+      "price_pkr": 650,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Tikka Pizza",
+      "variant": "Medium",
+      "price_pkr": 999,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Tikka Pizza",
+      "variant": "Large",
+      "price_pkr": 1400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Tikka Pizza",
+      "variant": "XL",
+      "price_pkr": 1800,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Fajita Pizza",
+      "variant": "Small",
+      "price_pkr": 650,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Fajita Pizza",
+      "variant": "Medium",
+      "price_pkr": 999,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Fajita Pizza",
+      "variant": "Large",
+      "price_pkr": 1400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Fajita Pizza",
+      "variant": "XL",
+      "price_pkr": 1800,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "BBQ Pizza",
+      "variant": "Small",
+      "price_pkr": 700,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "BBQ Pizza",
+      "variant": "Medium",
+      "price_pkr": 1050,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "BBQ Pizza",
+      "variant": "Large",
+      "price_pkr": 1499,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "BBQ Pizza",
+      "variant": "XL",
+      "price_pkr": 1899,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Hot N Spicy Pizza",
+      "variant": "Small",
+      "price_pkr": 700,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Hot N Spicy Pizza",
+      "variant": "Medium",
+      "price_pkr": 1050,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Hot N Spicy Pizza",
+      "variant": "Large",
+      "price_pkr": 1499,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Hot N Spicy Pizza",
+      "variant": "XL",
+      "price_pkr": 1899,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Achaari Pizza",
+      "variant": "Small",
+      "price_pkr": 700,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Achaari Pizza",
+      "variant": "Medium",
+      "price_pkr": 1050,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Achaari Pizza",
+      "variant": "Large",
+      "price_pkr": 1499,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Achaari Pizza",
+      "variant": "XL",
+      "price_pkr": 1899,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Supreme Pizza",
+      "variant": "Small",
+      "price_pkr": 700,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Supreme Pizza",
+      "variant": "Medium",
+      "price_pkr": 1050,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Supreme Pizza",
+      "variant": "Large",
+      "price_pkr": 1499,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "Supreme Pizza",
+      "variant": "XL",
+      "price_pkr": 1899,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "M.T. Bites Special Pizza",
+      "variant": "Small",
+      "price_pkr": 750,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "M.T. Bites Special Pizza",
+      "variant": "Medium",
+      "price_pkr": 1150,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "M.T. Bites Special Pizza",
+      "variant": "Large",
+      "price_pkr": 1550,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Classic Pizza",
+      "product_name": "M.T. Bites Special Pizza",
+      "variant": "XL",
+      "price_pkr": 1950,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Cheese Stuff Pizza",
+      "variant": "Medium",
+      "price_pkr": 1199,
+      "description": "Special cheese, malai boti, chicken, vegetables & green olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Cheese Stuff Pizza",
+      "variant": "Large",
+      "price_pkr": 1699,
+      "description": "Special cheese, malai boti, chicken, vegetables & green olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Crown Crust Pizza",
+      "variant": "Medium",
+      "price_pkr": 1199,
+      "description": "Kabab, chicken, vegetables & black olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Crown Crust Pizza",
+      "variant": "Large",
+      "price_pkr": 1699,
+      "description": "Kabab, chicken, vegetables & black olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Bihari Kabab Pizza",
+      "variant": "Medium",
+      "price_pkr": 1199,
+      "description": "Special kabab, chicken, vegetables, black olives & sweet corn",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Bihari Kabab Pizza",
+      "variant": "Large",
+      "price_pkr": 1699,
+      "description": "Special kabab, chicken, vegetables, black olives & sweet corn",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Kabab Crust Pizza",
+      "variant": "Medium",
+      "price_pkr": 1199,
+      "description": "Kabab, chicken, vegetables & black olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "Kabab Crust Pizza",
+      "variant": "Large",
+      "price_pkr": 1699,
+      "description": "Kabab, chicken, vegetables & black olives",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "M.T. Special Doner Pizza",
+      "variant": "Medium",
+      "price_pkr": 1299,
+      "description": "Double filling, chicken, cube vegetables, olives & pineapple",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Pizza",
+      "product_name": "M.T. Special Doner Pizza",
+      "variant": "Large",
+      "price_pkr": 1799,
+      "description": "Double filling, chicken, cube vegetables, olives & pineapple",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Pizza Deals",
+      "product_name": "Buy One Get One Free Pizza",
+      "variant": "Medium",
+      "price_pkr": 1699,
+      "description": "Choose from Tikka, Fajita, Supreme, Hot N Spicy, Achaari; two pizzas",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Pizza Deals",
+      "product_name": "Buy One Get One Free Pizza",
+      "variant": "Large",
+      "price_pkr": 2499,
+      "description": "Choose from Tikka, Fajita, Supreme, Hot N Spicy, Achaari; two pizzas",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 1",
+      "variant": "",
+      "price_pkr": 899,
+      "description": "2 Burgers + Fries + Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 2",
+      "variant": "",
+      "price_pkr": 750,
+      "description": "2 Fried Pieces + Fries + Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 3",
+      "variant": "",
+      "price_pkr": 950,
+      "description": "10 pcs Wings + Fries + Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 4",
+      "variant": "",
+      "price_pkr": 1350,
+      "description": "3 Zingers + Large Fries + Drink (500ml)",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 5",
+      "variant": "",
+      "price_pkr": 1630,
+      "description": "3 Zingers + 2 Fried Pieces + Fries + 3 Drinks",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 6",
+      "variant": "",
+      "price_pkr": 1999,
+      "description": "5 Zingers + Large Fries + 1.5 Liter Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "M.T Special Deal 7",
+      "variant": "",
+      "price_pkr": 750,
+      "description": "2 Zinger Rolls + 2 Drinks",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Snack Box",
+      "variant": "",
+      "price_pkr": 1099,
+      "description": "Strips + Wing + Fried Piece",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Family Deal 1",
+      "variant": "",
+      "price_pkr": 1699,
+      "description": "1 Small Pizza + 2 Zingers + Fries + 2 Drinks",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Family Deal 2",
+      "variant": "",
+      "price_pkr": 2450,
+      "description": "1 Large Pizza + 2 Burgers + 2 Fries + Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Large Combo 1",
+      "variant": "",
+      "price_pkr": 2999,
+      "description": "2 Medium Pizzas + 4 Fried Pieces + Large Fries + 1.5L Bottle",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Large Combo 2",
+      "variant": "",
+      "price_pkr": 4499,
+      "description": "2 Large Pizzas + 5 Zingers + Large Fries + 2L Drink",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Birthday Deal",
+      "variant": "",
+      "price_pkr": 4999,
+      "description": "2 Large Pizzas + 4 Zingers + 10 pcs Wings + Molten Lava Cake + 2 x 1.5L Drinks",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Fresh Lime",
+      "variant": "",
+      "price_pkr": 200,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Mint Margarita",
+      "variant": "",
+      "price_pkr": 250,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Sunset Lagoon",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Strawberry Margarita",
+      "variant": "",
+      "price_pkr": 300,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Sweet Lassi / Salty Lassi",
+      "variant": "",
+      "price_pkr": 250,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Mango Lassi",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Mango Shake",
+      "variant": "",
+      "price_pkr": 300,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Strawberry Shake",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Apple Shake",
+      "variant": "",
+      "price_pkr": 250,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Apple + Banana Shake",
+      "variant": "",
+      "price_pkr": 280,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Drinks & Shakes",
+      "product_name": "Pineapple Shake",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Ice Cream Shakes",
+      "product_name": "Vanilla / Chocolate Ice Cream Shake",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Ice Cream Shakes",
+      "product_name": "Oreo Shake / Kit Kat Shake",
+      "variant": "",
+      "price_pkr": 400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Ice Cream Shakes",
+      "product_name": "Date Shake / Super Mix Shake",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "MT Sips & Bites",
+      "product_name": "Chai (Matka or cup)",
+      "variant": "",
+      "price_pkr": 100,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "MT Sips & Bites",
+      "product_name": "Green Tea",
+      "variant": "",
+      "price_pkr": 50,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "MT Sips & Bites",
+      "product_name": "Chai with Paratha",
+      "variant": "",
+      "price_pkr": 200,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Desserts",
+      "product_name": "Molten Lava Cake",
+      "variant": "",
+      "price_pkr": 299,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Desserts",
+      "product_name": "Molten Lava Cake with Ice Cream",
+      "variant": "",
+      "price_pkr": 399,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Desserts",
+      "product_name": "Kunafe Cake with Ice Cream",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Wings",
+      "product_name": "Crispy Wings",
+      "variant": "10 pcs",
+      "price_pkr": 700,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Wings",
+      "product_name": "BBQ Wings",
+      "variant": "10 pcs",
+      "price_pkr": 800,
+      "description": "Sauce glazed wings",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Wings",
+      "product_name": "Cheezious Wings",
+      "variant": "10 pcs",
+      "price_pkr": 1000,
+      "description": "Shredded with special cheese",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Wings",
+      "product_name": "Special Wings",
+      "variant": "10 pcs",
+      "price_pkr": 900,
+      "description": "Served with special sauce",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Chicken Nuggets",
+      "variant": "Option 1",
+      "price_pkr": 500,
+      "description": "",
+      "needs_confirmation": true
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Chicken Nuggets",
+      "variant": "Option 2",
+      "price_pkr": 950,
+      "description": "",
+      "needs_confirmation": true
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Fried Piece",
+      "variant": "",
+      "price_pkr": 250,
+      "description": "1 pc",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Fried Pieces",
+      "variant": "",
+      "price_pkr": 999,
+      "description": "4 pcs with bottle",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Fried Pieces",
+      "variant": "",
+      "price_pkr": 1999,
+      "description": "9 pcs with bottle",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Finger Fish",
+      "variant": "",
+      "price_pkr": 999,
+      "description": "5 pcs with fries",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Finger Fish",
+      "variant": "",
+      "price_pkr": 1999,
+      "description": "10 pcs with fries",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "Chicken Strips",
+      "variant": "",
+      "price_pkr": 600,
+      "description": "5 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Chicken Shawarma",
+      "variant": "Small",
+      "price_pkr": 180,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Chicken Shawarma",
+      "variant": "Large",
+      "price_pkr": 260,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Chicken Cheese Shawarma",
+      "variant": "Small",
+      "price_pkr": 230,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Chicken Cheese Shawarma",
+      "variant": "Large",
+      "price_pkr": 300,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Wrap Roll",
+      "variant": "",
+      "price_pkr": 500,
+      "description": "Tortilla bread, chicken steak cubes, sauce & pickle",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Zingratha Roll",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Zingratha Cheese Roll",
+      "variant": "",
+      "price_pkr": 420,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "Spin Rolls",
+      "variant": "",
+      "price_pkr": 450,
+      "description": "4 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fish",
+      "product_name": "Fish Fry",
+      "variant": "",
+      "price_pkr": 1300,
+      "description": "",
+      "needs_confirmation": true
+    },
+    {
+      "category": "Fish",
+      "product_name": "Fish Grill",
+      "variant": "",
+      "price_pkr": 1500,
+      "description": "",
+      "needs_confirmation": true
+    },
+    {
+      "category": "Fish",
+      "product_name": "Fish Tikka",
+      "variant": "",
+      "price_pkr": 1600,
+      "description": "12 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Chicken Boti",
+      "variant": "",
+      "price_pkr": 130,
+      "description": "1 seekh",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Malai Boti",
+      "variant": "",
+      "price_pkr": 1200,
+      "description": "12 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Reshmi Seekh Kabab",
+      "variant": "",
+      "price_pkr": 1400,
+      "description": "4 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Leg Piece",
+      "variant": "",
+      "price_pkr": 350,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Chest Piece",
+      "variant": "",
+      "price_pkr": 400,
+      "description": "",
+      "needs_confirmation": false
+    },
+    {
+      "category": "BBQ",
+      "product_name": "Rajasthani Tikka",
+      "variant": "",
+      "price_pkr": 1100,
+      "description": "4 pcs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Platters",
+      "product_name": "M.T. Special Platter",
+      "variant": "",
+      "price_pkr": 1899,
+      "description": "Rice with 2 pcs Malai Boti, 2 Chicken Boti, 2 Kababs and 1 pc Rajasthani Tikka",
+      "needs_confirmation": false
+    }
+  ]
+}
