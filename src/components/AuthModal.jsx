@@ -22,6 +22,7 @@ import {
   getLockoutRemaining,
   KNOWN_ADMIN_EMAILS
 } from '../auth.js';
+import { updateUserPasswordCloud, supabase } from '../supabase.js';
 
 export default function AuthModal({
   staffList = [],
@@ -30,8 +31,16 @@ export default function AuthModal({
   onCancel,
   canCancel = false
 }) {
-  // Mode: 'waiter' (PIN) or 'admin' (Email + Password) or 'reset' (Forgot Password)
-  const [authMode, setAuthMode] = useState('waiter');
+  // Mode: 'waiter' (PIN) or 'admin' (Email + Password) or 'set-password' (Invite / Reset token)
+  const [authMode, setAuthMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash || '';
+      if (hash.includes('access_token=') || hash.includes('type=invite') || hash.includes('type=recovery')) {
+        return 'set-password';
+      }
+    }
+    return 'waiter';
+  });
 
   // Waiter State
   const waiterStaff = staffList.filter(s => s.active && s.role !== 'admin');
@@ -41,8 +50,10 @@ export default function AuthModal({
   const [pin, setPin] = useState('');
 
   // Admin Email State
-  const [email, setEmail] = useState('rajasaad9264@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [offlineFallbackPin, setOfflineFallbackPin] = useState('');
   const [showOfflineAdminPin, setShowOfflineAdminPin] = useState(false);
@@ -190,6 +201,49 @@ export default function AuthModal({
     }
   };
 
+  // Handle Set Password from Invite / Reset Email Link
+  const handleSetPasswordSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      await updateUserPasswordCloud(newPassword);
+      setSuccessMsg('Password set successfully! Logging you in…');
+      // Clean URL hash so user does not re-enter invite mode on reload
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+      setTimeout(async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.email) {
+            const session = await loginWithEmail(user.email, newPassword);
+            onLoginSuccess(session);
+          } else {
+            setAuthMode('admin');
+            setSuccessMsg('Password updated! Please sign in with your email.');
+          }
+        } catch {
+          setAuthMode('admin');
+        }
+      }, 1200);
+    } catch (err) {
+      setError(err.message || 'Failed to update password. Link may have expired.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="modal-overlay auth-overlay">
       <div className="auth-card">
@@ -198,9 +252,17 @@ export default function AuthModal({
           <div className="auth-icon-badge">
             <Lock size={24} />
           </div>
-          <h2>{authMode === 'waiter' ? 'Staff Sign In' : 'Owner / Admin Portal'}</h2>
+          <h2>
+            {authMode === 'set-password'
+              ? 'Set Your Password'
+              : authMode === 'waiter'
+              ? 'Staff Sign In'
+              : 'Owner / Admin Portal'}
+          </h2>
           <p>
-            {authMode === 'waiter'
+            {authMode === 'set-password'
+              ? 'Create a secure password for your invited admin account'
+              : authMode === 'waiter'
               ? 'Select your account and enter your 4-digit PIN'
               : 'Secure login for MT Bites administration'}
           </p>
@@ -211,33 +273,35 @@ export default function AuthModal({
           )}
         </div>
 
-        {/* Tab Switcher */}
-        <div className="auth-tabs">
-          <button
-            type="button"
-            className={`auth-tab-btn ${authMode === 'waiter' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('waiter');
-              setError('');
-              setSuccessMsg('');
-            }}
-          >
-            <User size={15} />
-            <span>Waiter (PIN)</span>
-          </button>
-          <button
-            type="button"
-            className={`auth-tab-btn ${authMode === 'admin' ? 'active' : ''}`}
-            onClick={() => {
-              setAuthMode('admin');
-              setError('');
-              setSuccessMsg('');
-            }}
-          >
-            <KeyRound size={15} />
-            <span>Owner (Email)</span>
-          </button>
-        </div>
+        {/* Tab Switcher (hidden when accepting invite / setting password) */}
+        {authMode !== 'set-password' && (
+          <div className="auth-tabs">
+            <button
+              type="button"
+              className={`auth-tab-btn ${authMode === 'waiter' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('waiter');
+                setError('');
+                setSuccessMsg('');
+              }}
+            >
+              <User size={15} />
+              <span>Waiter (PIN)</span>
+            </button>
+            <button
+              type="button"
+              className={`auth-tab-btn ${authMode === 'admin' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('admin');
+                setError('');
+                setSuccessMsg('');
+              }}
+            >
+              <KeyRound size={15} />
+              <span>Owner (Email)</span>
+            </button>
+          </div>
+        )}
 
         {/* Lockout Countdown Alert */}
         {lockoutRemaining > 0 && (
@@ -382,33 +446,6 @@ export default function AuthModal({
         {/* ========================================================= */}
         {authMode === 'admin' && (
           <form className="auth-admin-section" onSubmit={handleEmailSubmit}>
-            {/* Quick Admin Email Chips */}
-            <div className="admin-email-chips">
-              <span className="chips-label">Quick Select:</span>
-              <div className="chips-row">
-                <button
-                  type="button"
-                  className={`admin-chip ${email === 'rajasaad9264@gmail.com' ? 'active' : ''}`}
-                  onClick={() => {
-                    setEmail('rajasaad9264@gmail.com');
-                    setError('');
-                  }}
-                >
-                  👑 Raja Saad (Owner)
-                </button>
-                <button
-                  type="button"
-                  className={`admin-chip ${email === 'wajidqayyum286@gmail.com' ? 'active' : ''}`}
-                  onClick={() => {
-                    setEmail('wajidqayyum286@gmail.com');
-                    setError('');
-                  }}
-                >
-                  🛠️ Wajid (Tech Admin)
-                </button>
-              </div>
-            </div>
-
             {/* Email Field */}
             <div className="auth-field">
               <label>Admin Email</label>
@@ -509,6 +546,62 @@ export default function AuthModal({
               }}
             >
               <ArrowLeft size={14} /> Back to Waiter Sign In
+            </button>
+          </form>
+        )}
+
+        {/* ========================================================= */}
+        {/* SET NEW PASSWORD MODE (From Email Invite / Reset Link) */}
+        {/* ========================================================= */}
+        {authMode === 'set-password' && (
+          <form className="auth-admin-section" onSubmit={handleSetPasswordSubmit}>
+            <div className="auth-field">
+              <label>New Password (min 6 characters)</label>
+              <div className="auth-input-wrapper">
+                <Lock size={16} className="auth-input-icon" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label>Confirm Password</label>
+              <div className="auth-input-wrapper">
+                <Lock size={16} className="auth-input-icon" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !newPassword || !confirmPassword}
+              className="btn btn-primary btn-full btn-large auth-submit-btn"
+            >
+              <Check size={18} />
+              {loading ? 'Saving Password…' : 'Save Password & Sign In'}
             </button>
           </form>
         )}

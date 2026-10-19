@@ -50,12 +50,33 @@ export default function App() {
 
   // Session & Authentication
   const [currentStaff, setCurrentStaff] = useState(() => getCachedSession());
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname || '';
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(window.location.search);
+      if (
+        path === '/login' ||
+        params.has('login') ||
+        hash.includes('access_token=') ||
+        hash.includes('type=invite') ||
+        hash.includes('type=recovery')
+      ) {
+        return true;
+      }
+    }
+    return false;
+  });
 
   // Active View & UI State (URL ?menu or ?table, or no staff session defaults to public menu)
   const [view, setView] = useState(() => {
     if (typeof window !== 'undefined') {
+      const path = window.location.pathname || '';
       const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash || '';
+      if (path === '/login' || params.has('login') || hash.includes('access_token=')) {
+        return getCachedSession() ? 'pos' : 'customer-menu';
+      }
       if (params.has('menu') || params.has('table')) return 'customer-menu';
     }
     return getCachedSession() ? 'pos' : 'customer-menu';
@@ -152,12 +173,9 @@ export default function App() {
   // Check session on load or when staff list changes
   useEffect(() => {
     if (!currentStaff && ready && staff.length > 0) {
-      // Default to first active staff or show auth modal
       const cached = getCachedSession();
       if (cached && staff.some(s => s.id === cached.id && s.active)) {
         setCurrentStaff(cached);
-      } else {
-        setShowAuthModal(true);
       }
     }
   }, [ready, staff, currentStaff]);

@@ -176,45 +176,34 @@ export default function PublicMenuView({
           <div className="public-header-actions">
             {tableParam && (
               <div className="table-badge">
-                <UtensilsCrossed size={14} />
-                <span>Table #{tableParam}</span>
+                <UtensilsCrossed size={13} />
+                <span>#{tableParam}</span>
               </div>
             )}
 
             {currentStaff ? (
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <div className="header-staff-actions">
                 <button
                   type="button"
                   className="staff-portal-btn active"
                   onClick={onGoToPos || onStaffLoginClick}
                   title="Return to Staff Ordering POS"
-                  style={{ background: '#fb923c', color: '#1a0f06', fontWeight: 800 }}
                 >
-                  <ShoppingBag size={16} />
-                  <span>← Back to POS</span>
+                  <ShoppingBag size={15} />
+                  <span>POS</span>
                 </button>
                 {onLogout && (
                   <button
                     type="button"
-                    className="staff-portal-btn"
+                    className="staff-portal-btn icon-only"
                     onClick={onLogout}
                     title="Sign Out"
                   >
-                    <LogOut size={16} />
+                    <LogOut size={15} />
                   </button>
                 )}
               </div>
-            ) : (
-              <button
-                type="button"
-                className="staff-portal-btn highlight"
-                onClick={onStaffLoginClick}
-                style={{ background: '#2d1e13', borderColor: '#fb923c', color: '#fb923c', fontWeight: 800 }}
-              >
-                <KeyRound size={16} />
-                <span>Staff Login</span>
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
 

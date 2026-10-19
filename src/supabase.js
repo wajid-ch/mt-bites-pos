@@ -55,6 +55,15 @@ export async function requestPasswordResetCloud(email) {
   return data;
 }
 
+export async function updateUserPasswordCloud(newPassword) {
+  if (!supabase) throw new Error('Cloud database is not configured');
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
+  });
+  if (error) throw error;
+  return data;
+}
+
 export async function signOutCloud() {
   if (!supabase) return;
   try {
