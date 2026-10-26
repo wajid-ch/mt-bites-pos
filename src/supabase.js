@@ -271,6 +271,26 @@ export async function fetchInventoryFromCloud() {
   }
 }
 
+export async function clearTestOrdersCloud() {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from('orders').delete().neq('id', 'keep-all');
+    if (error) console.warn('[Supabase] Clear cloud orders notice:', error.message);
+  } catch (err) {
+    console.warn('[Supabase] Clear cloud orders failed:', err.message);
+  }
+}
+
+export async function clearTestExpensesCloud() {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.from('expenses').delete().neq('id', 'keep-all');
+    if (error) console.warn('[Supabase] Clear cloud expenses notice:', error.message);
+  } catch (err) {
+    console.warn('[Supabase] Clear cloud expenses failed:', err.message);
+  }
+}
+
 export async function pushExpenseToCloud(expense) {
   if (!supabase) return;
   try {

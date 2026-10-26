@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Download, Upload, FileSpreadsheet, Check, AlertTriangle, Printer, WifiOff } from 'lucide-react';
+import {
+  Settings as SettingsIcon, Download, Upload, FileSpreadsheet, Check,
+  AlertTriangle, Printer, WifiOff, Trash2, RotateCcw
+} from 'lucide-react';
 import { db, exportBackup, restoreBackup } from '../db.js';
 import { localDateKey } from '../money.js';
+import { clearTestOrdersCloud, clearTestExpensesCloud } from '../supabase.js';
 
 function downloadFile(name, contents, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([contents], { type }));
@@ -65,6 +69,57 @@ export default function SettingsView({
     } catch (err) {
       alert(`Restore failed: ${err.message}`);
     }
+  };
+
+  const handleClearTestOrders = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all TEST ORDERS?\n\n' +
+      'This will reset all orders, bills, and cash totals back to zero. ' +
+      'Your menu items, prices, and staff accounts will stay intact.'
+    );
+    if (!confirmed) return;
+
+    await onAttempt(async () => {
+      await db.orders.clear();
+      await clearTestOrdersCloud();
+      if (onReload) await onReload();
+    }, 'All test orders and bills have been cleared');
+  };
+
+  const handleClearTestExpenses = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all TEST EXPENSES?\n\n' +
+      'This will wipe out all recorded test expenses and set expenses to Rs. 0.'
+    );
+    if (!confirmed) return;
+
+    await onAttempt(async () => {
+      await db.expenses.clear();
+      await clearTestExpensesCloud();
+      if (onReload) await onReload();
+    }, 'All test expenses have been cleared');
+  };
+
+  const handleClearAllTestData = async () => {
+    const confirmed = window.confirm(
+      'RESET ALL TEST DATA (FRESH START)?\n\n' +
+      'This will clear:\n' +
+      '• All test orders & customer bills\n' +
+      '• All test expenses\n' +
+      '• All inventory stock logs & adjustments\n\n' +
+      'Your 88+ menu products, prices, and staff accounts WILL BE PRESERVED.\n\n' +
+      'Click OK to start clean for real restaurant operations.'
+    );
+    if (!confirmed) return;
+
+    await onAttempt(async () => {
+      await db.orders.clear();
+      await db.expenses.clear();
+      await db.inventoryMovements.clear();
+      await clearTestOrdersCloud();
+      await clearTestExpensesCloud();
+      if (onReload) await onReload();
+    }, 'Fresh start complete: All test orders, bills & expenses cleared');
   };
 
   const handleExportCSV = () => {
@@ -186,6 +241,50 @@ export default function SettingsView({
                 onChange={handleRestoreFile}
               />
             </label>
+          </div>
+        </section>
+
+        {/* Clear Test Data / Reset for Production */}
+        <section className="panel settings-section" style={{ borderColor: 'rgba(248, 113, 113, 0.4)' }}>
+          <div className="panel-header">
+            <div>
+              <h2 style={{ color: '#fca5a5' }}>Reset Test Data (Fresh Start)</h2>
+              <p>Clear test orders, dummy bills, and trial expenses before going live</p>
+            </div>
+            <Trash2 size={20} color="#f87171" />
+          </div>
+
+          <div className="stack gap-2">
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleClearAllTestData}
+              style={{ background: '#7f1d1d', borderColor: '#b91c1c', color: '#fff', fontWeight: 800 }}
+            >
+              <RotateCcw size={17} />
+              <span>Reset All Test Orders & Expenses (Fresh Start)</span>
+            </button>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClearTestOrders}
+                style={{ flex: 1, borderColor: '#7f1d1d', color: '#fca5a5' }}
+              >
+                <Trash2 size={15} />
+                <span>Clear Orders Only</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleClearTestExpenses}
+                style={{ flex: 1, borderColor: '#7f1d1d', color: '#fca5a5' }}
+              >
+                <Trash2 size={15} />
+                <span>Clear Expenses Only</span>
+              </button>
+            </div>
           </div>
         </section>
       </div>
