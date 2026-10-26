@@ -3662,6 +3662,21 @@ strong, b { font-weight: 700; }
   margin-left: 6px;
 }
 
+.report-btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+.report-btn-group button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+
 .report-preview-panel {
   padding: 20px;
 }

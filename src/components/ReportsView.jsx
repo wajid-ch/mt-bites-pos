@@ -137,22 +137,42 @@ export default function ReportsView({
           <h1>Financial & Operational Reports</h1>
           <p>Download daily, weekly, monthly, and custom-dated audits for sales, dishes sold, expenses, and inventory.</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => exportComprehensiveExecutiveReport({
-            orders,
-            expenses,
-            inventory,
-            movements,
-            startDate,
-            endDate,
-            periodLabel
-          })}
-        >
-          <ArrowDownToLine size={18} />
-          <span>Download Executive Summary</span>
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => exportComprehensiveExecutiveReport({
+              orders,
+              expenses,
+              inventory,
+              movements,
+              startDate,
+              endDate,
+              periodLabel,
+              format: 'pdf'
+            })}
+          >
+            <FileText size={17} />
+            <span>Download Executive PDF</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => exportComprehensiveExecutiveReport({
+              orders,
+              expenses,
+              inventory,
+              movements,
+              startDate,
+              endDate,
+              periodLabel,
+              format: 'csv'
+            })}
+          >
+            <Download size={17} />
+            <span>Executive CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Date Filter & Presets Card */}
@@ -308,14 +328,24 @@ export default function ReportsView({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={() => exportSalesAndBillsReport({ orders, startDate, endDate, periodLabel })}
-          >
-            <Download size={16} />
-            <span>Download Sales CSV</span>
-          </button>
+          <div className="report-btn-group">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => exportSalesAndBillsReport({ orders, startDate, endDate, periodLabel, format: 'pdf' })}
+            >
+              <FileText size={15} />
+              <span>PDF Report</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => exportSalesAndBillsReport({ orders, startDate, endDate, periodLabel, format: 'csv' })}
+            >
+              <Download size={15} />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* 2. Dishes / Things Sold Report */}
@@ -341,14 +371,24 @@ export default function ReportsView({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={() => exportThingsSoldReport({ orders, startDate, endDate, periodLabel })}
-          >
-            <Download size={16} />
-            <span>Download Dishes Sold CSV</span>
-          </button>
+          <div className="report-btn-group">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => exportThingsSoldReport({ orders, startDate, endDate, periodLabel, format: 'pdf' })}
+            >
+              <FileText size={15} />
+              <span>PDF Report</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => exportThingsSoldReport({ orders, startDate, endDate, periodLabel, format: 'csv' })}
+            >
+              <Download size={15} />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* 3. Expenses Report */}
@@ -374,14 +414,24 @@ export default function ReportsView({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={() => exportExpensesReport({ expenses, startDate, endDate, periodLabel })}
-          >
-            <Download size={16} />
-            <span>Download Expenses CSV</span>
-          </button>
+          <div className="report-btn-group">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => exportExpensesReport({ expenses, startDate, endDate, periodLabel, format: 'pdf' })}
+            >
+              <FileText size={15} />
+              <span>PDF Report</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => exportExpensesReport({ expenses, startDate, endDate, periodLabel, format: 'csv' })}
+            >
+              <Download size={15} />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* 4. Inventory Valuation & Audit */}
@@ -407,14 +457,24 @@ export default function ReportsView({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={() => exportInventoryReport({ inventory, movements, startDate, endDate, periodLabel })}
-          >
-            <Download size={16} />
-            <span>Download Inventory CSV</span>
-          </button>
+          <div className="report-btn-group">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => exportInventoryReport({ inventory, movements, startDate, endDate, periodLabel, format: 'pdf' })}
+            >
+              <FileText size={15} />
+              <span>PDF Report</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => exportInventoryReport({ inventory, movements, startDate, endDate, periodLabel, format: 'csv' })}
+            >
+              <Download size={15} />
+              <span>CSV</span>
+            </button>
+          </div>
         </div>
       </div>
 
