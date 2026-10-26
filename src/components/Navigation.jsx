@@ -3,7 +3,7 @@ import {
   ShoppingBag, ClipboardList, LayoutDashboard, BookOpen,
   Package, ReceiptText, Users, Settings as SettingsIcon,
   Flame, Menu as MenuIcon, Wifi, WifiOff, LogOut, Lock,
-  ChevronRight, User
+  ChevronRight, User, FileSpreadsheet
 } from 'lucide-react';
 
 export const navItems = [
@@ -11,6 +11,7 @@ export const navItems = [
   { id: 'orders', label: 'Orders', icon: ClipboardList, adminOnly: false },
   { id: 'customer-menu', label: 'Customer Menu', icon: BookOpen, adminOnly: false },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
+  { id: 'reports', label: 'Reports & Audits', icon: FileSpreadsheet, adminOnly: true },
   { id: 'menu', label: 'Menu & Prices', icon: BookOpen, adminOnly: true },
   { id: 'inventory', label: 'Inventory', icon: Package, adminOnly: true },
   { id: 'expenses', label: 'Expenses', icon: ReceiptText, adminOnly: true },

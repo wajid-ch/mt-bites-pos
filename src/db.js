@@ -35,14 +35,20 @@ export async function initializeDatabase() {
       await db.settings.put({ key: 'shopName', value: 'MT Bites' });
       await db.settings.put({ key: 'thermalWidth', value: '80mm' });
     } else {
-      // Ensure products have image property populated
+      // Sync any new menu items from seedProducts without overwriting existing product customizations
       const existing = await db.products.toArray();
-      const needsImageUpdate = existing.some(p => !p.image);
-      if (needsImageUpdate) {
-        for (const p of existing) {
-          if (!p.image) {
-            await db.products.update(p.id, { image: getProductImage(p) });
-          }
+      const existingNames = new Set(existing.map(p => p.name.toLowerCase()));
+      const allSeed = seedProducts();
+      const newItemsToAdd = allSeed.filter(p => !existingNames.has(p.name.toLowerCase()));
+      if (newItemsToAdd.length > 0) {
+        await db.products.bulkPut(newItemsToAdd);
+      }
+
+      // Ensure products have image property updated if needed
+      for (const p of existing) {
+        const correctImg = getProductImage(p);
+        if (!p.image || (p.image !== correctImg && correctImg.includes('-'))) {
+          await db.products.update(p.id, { image: correctImg });
         }
       }
     }

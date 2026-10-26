@@ -24,6 +24,7 @@ import OrderSuccessModal from './components/OrderSuccessModal.jsx';
 import PayModal from './components/PayModal.jsx';
 import OrdersView from './components/OrdersView.jsx';
 import DashboardView from './components/DashboardView.jsx';
+import ReportsView from './components/ReportsView.jsx';
 import MenuAdmin from './components/MenuAdmin.jsx';
 import InventoryView from './components/InventoryView.jsx';
 import ExpensesView from './components/ExpensesView.jsx';
@@ -233,7 +234,7 @@ export default function App() {
   // Navigation with permission checking
   const navigateTo = (targetView) => {
     const isAdmin = currentStaff?.role === 'admin';
-    const adminViews = ['dashboard', 'menu', 'inventory', 'expenses', 'staff', 'settings'];
+    const adminViews = ['dashboard', 'reports', 'menu', 'inventory', 'expenses', 'staff', 'settings'];
 
     if (adminViews.includes(targetView) && !isAdmin) {
       notify('Access restricted to Owner/Admin accounts');
@@ -563,6 +564,16 @@ export default function App() {
               orders={orders}
               expenses={expenses}
               inventory={inventory}
+              onNavigate={navigateTo}
+            />
+          )}
+
+          {view === 'reports' && currentStaff?.role === 'admin' && (
+            <ReportsView
+              orders={orders}
+              expenses={expenses}
+              inventory={inventory}
+              movements={movements}
               onNavigate={navigateTo}
             />
           )}

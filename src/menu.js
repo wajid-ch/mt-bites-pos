@@ -34,8 +34,21 @@ export const categoryImages = {
   'Desserts': '/images/food/desserts.webp'
 };
 
+export const specificProductImages = {
+  'M.T Special Paratha Twister': '/images/food/paratha-twister.webp',
+  'M.T Loaded Pasta': '/images/food/loaded-pasta.webp',
+  'M.T Special Pan Fries': '/images/food/special-pan-fries.webp',
+  'Egg Fried Rice': '/images/food/egg-fried-rice.webp',
+  'Chicken Fried Rice': '/images/food/chicken-fried-rice.webp',
+  'Family Platter': '/images/food/family-platter-hero.webp',
+  'M.T. Special Platter': '/images/food/platter.webp'
+};
+
 export function getProductImage(product) {
   if (product?.image) return product.image;
+  if (product?.name && specificProductImages[product.name]) {
+    return specificProductImages[product.name];
+  }
   return categoryImages[product?.category] || '/images/food/burger.webp';
 }
 
@@ -51,7 +64,7 @@ export function seedProducts() {
         description: entry.description || '',
         active: true,
         needsConfirmation: false,
-        image: categoryImages[entry.category] || '',
+        image: specificProductImages[entry.product_name] || categoryImages[entry.category] || '',
         variants: []
       });
     }

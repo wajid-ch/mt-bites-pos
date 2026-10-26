@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import {
   Wallet, ShoppingBag, Clock, TrendingUp, BarChart3, Flame,
-  Package, AlertTriangle, ArrowRight, Plus, CheckCircle2, Coffee
+  Package, AlertTriangle, ArrowRight, Plus, CheckCircle2, Coffee,
+  FileSpreadsheet
 } from 'lucide-react';
 import { rs, localDateKey } from '../money.js';
 
@@ -68,14 +69,24 @@ export default function DashboardView({
           <h1>Operations Dashboard</h1>
           <p>Real-time sales, order progress, and inventory snapshot</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => onNavigate('pos')}
-        >
-          <Plus size={17} />
-          <span>New Order</span>
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => onNavigate('reports')}
+          >
+            <FileSpreadsheet size={17} />
+            <span>Reports & Audits</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => onNavigate('pos')}
+          >
+            <Plus size={17} />
+            <span>New Order</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards Grid */}

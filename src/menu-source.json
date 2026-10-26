@@ -978,6 +978,54 @@
       "price_pkr": 1899,
       "description": "Rice with 2 pcs Malai Boti, 2 Chicken Boti, 2 Kababs and 1 pc Rajasthani Tikka",
       "needs_confirmation": false
+    },
+    {
+      "category": "Shawarma & Wraps",
+      "product_name": "M.T Special Paratha Twister",
+      "variant": "",
+      "price_pkr": 399,
+      "description": "Paratha bread with zinger chicken piece and mayonnaise",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Snacks",
+      "product_name": "M.T Loaded Pasta",
+      "variant": "",
+      "price_pkr": 749,
+      "description": "Creamy cheesy loaded pasta with seasoned chicken chunks and herbs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Fries & Sides",
+      "product_name": "M.T Special Pan Fries",
+      "variant": "",
+      "price_pkr": 649,
+      "description": "Sizzling pan fries topped with melted cheese, spicy sauces & chicken bits",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Egg Fried Rice",
+      "variant": "",
+      "price_pkr": 599,
+      "description": "Wok-tossed aromatic rice with fresh vegetables and scrambled eggs",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Combo Deals",
+      "product_name": "Chicken Fried Rice",
+      "variant": "",
+      "price_pkr": 799,
+      "description": "Signature stir-fried rice with tender seasoned chicken and crisp garden vegetables",
+      "needs_confirmation": false
+    },
+    {
+      "category": "Special Platters",
+      "product_name": "Family Platter",
+      "variant": "",
+      "price_pkr": 4999,
+      "description": "Perfect for sharing: 5x Reshmi Kabab, 5x Malai Boti, 5x Chicken Boti Seekh, 1x Leg Piece, 1x Chest Piece, 5x Mint Margarita",
+      "needs_confirmation": false
     }
   ]
 }
