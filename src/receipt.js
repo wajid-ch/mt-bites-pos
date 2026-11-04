@@ -144,6 +144,173 @@ export function buildThermerString(order, type = 'customer', shopName = 'MT Bite
 }
 
 /**
+ * Builds the `JSON_FORCE_OBJECT` dictionary (`{ "0": { type: 0, content, bold, align, format }, ... }`)
+ * used by Thermer's Browser Print feature on BOTH:
+ * - iPhone / iOS (`bprint://<RESPONSEURL>`)
+ * - Android (`my.bluetoothprint.scheme://<RESPONSEURL>`)
+ */
+export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
+  const kitchen = type === 'kitchen';
+  const is58 = thermalWidth === '58mm';
+  const lineChars = is58 ? 32 : 48;
+  const dashLine = '-'.repeat(lineChars);
+  const eqLine = '='.repeat(lineChars);
+
+  const clean = (s) =>
+    String(s ?? '')
+      .replace(/[<>]/g, '')
+      .replace(/·/g, '-')
+      .replace(/×/g, 'x')
+      .trim();
+
+  const lr = (left, right, width = lineChars) => {
+    const l = clean(left);
+    const r = clean(right);
+    if (!r) return l;
+    const space = width - l.length - r.length;
+    if (space >= 1) return l + ' '.repeat(space) + r;
+    const maxL = Math.max(10, width - r.length - 1);
+    return l.slice(0, maxL) + ' ' + r;
+  };
+
+  const itemRow = (name, qty, amount, width = lineChars) => {
+    const qStr = `${qty}x`.padEnd(4, ' ');
+    const aStr = clean(amount).padStart(is58 ? 9 : 11, ' ');
+    const nameWidth = width - qStr.length - aStr.length - 1;
+    const cleanName = clean(name);
+    const lines = [];
+    for (let i = 0; i < cleanName.length; i += nameWidth) {
+      const chunk = cleanName.slice(i, i + nameWidth);
+      if (i === 0) {
+        lines.push(qStr + chunk.padEnd(nameWidth, ' ') + ' ' + aStr);
+      } else {
+        lines.push('    ' + chunk);
+      }
+    }
+    return lines;
+  };
+
+  const entries = [];
+  const addText = (content, bold = 1, align = 0, format = 0) => {
+    entries.push({ type: 0, content: String(content), bold, align, format });
+  };
+
+  // 1. Header
+  addText(clean(shopName || 'MT BITES').toUpperCase(), 1, 1, 2); // Double Height + Width, Centered
+  addText('KASHMIR - FAST FOOD POS', 1, 1, 0);
+  addText(kitchen ? '[ KITCHEN TICKET ]' : '[ CUSTOMER BILL ]', 1, 1, 1);
+  addText(eqLine, 1, 0, 0);
+
+  // 2. Meta
+  addText(lr(`Order: ${order.number || ''}`, fmtDate(order.createdAt)), 1, 0, 0);
+  const typeLabel = `Type: ${order.orderType || 'Dine-in'}${order.tableNumber ? ` (Table ${order.tableNumber})` : ''}`;
+  addText(lr(typeLabel, order.serverName ? `Staff: ${order.serverName}` : ''), 1, 0, 0);
+  if (order.customerName) {
+    addText(`Customer: ${clean(order.customerName)}`, 1, 0, 0);
+  }
+  addText(dashLine, 1, 0, 0);
+
+  // 3. Column Header
+  const hdrQty = 'QTY '.padEnd(4, ' ');
+  const hdrAmt = 'AMOUNT'.padStart(is58 ? 9 : 11, ' ');
+  const hdrItem = 'ITEM'.padEnd(lineChars - hdrQty.length - hdrAmt.length - 1, ' ');
+  addText(`${hdrQty}${hdrItem} ${hdrAmt}`, 1, 0, 0);
+  addText(dashLine, 1, 0, 0);
+
+  // 4. Items
+  for (const item of order.items || []) {
+    const lines = itemRow(item.name || 'Item', item.quantity || 1, rs(lineTotal(item)));
+    for (const ln of lines) {
+      addText(ln, 1, 0, kitchen ? 1 : 0);
+    }
+    if (item.variant && item.variant !== 'Regular') {
+      addText(`    Size/Option: ${clean(item.variant)}`, 0, 0, 0);
+    }
+  }
+  addText(dashLine, 1, 0, 0);
+
+  // 5. Note
+  if (order.note) {
+    addText(`NOTE: ${clean(order.note)}`, 1, 0, 1);
+    addText(dashLine, 1, 0, 0);
+  }
+
+  // 6. Totals
+  addText(lr('Subtotal:', rs(order.subtotal)), 1, 0, 0);
+  if (order.discount) {
+    addText(lr('Discount:', `-${rs(order.discount)}`), 1, 0, 0);
+  }
+  addText(eqLine, 1, 0, 0);
+  addText(lr(kitchen ? 'ORDER TOTAL:' : 'NET TOTAL:', rs(order.total)), 1, 0, 1);
+  addText(eqLine, 1, 0, 0);
+
+  // 7. Payment Status
+  const statusBanner = kitchen
+    ? '*** PREPARE ORDER NOW ***'
+    : order.paymentStatus === 'paid'
+      ? '*** CASH PAID ***'
+      : '*** UNPAID ***';
+  addText(statusBanner, 1, 1, 1);
+
+  if (!kitchen && order.paymentStatus === 'paid' && order.cashReceived !== null && order.cashReceived !== undefined) {
+    addText(lr('Cash Received:', rs(order.cashReceived)), 1, 0, 0);
+    addText(lr('Change Due:', rs(order.change)), 1, 0, 0);
+  }
+
+  // 8. Footer
+  addText(' ', 0, 0, 0);
+  if (!kitchen) {
+    addText('Thank you for choosing MT Bites!', 1, 1, 0);
+    addText('Please visit again.', 0, 1, 0);
+  } else {
+    addText(`MT Bites Kitchen Copy - ${order.paymentStatus === 'paid' ? 'PAID' : 'UNPAID'}`, 1, 1, 0);
+  }
+  addText(' ', 0, 0, 0);
+
+  // Convert to JSON_FORCE_OBJECT dictionary: { "0": {...}, "1": {...} }
+  const forcedObj = {};
+  entries.forEach((entry, idx) => {
+    forcedObj[String(idx)] = entry;
+  });
+  return forcedObj;
+}
+
+function toBase64Url(str) {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(str, 'utf-8')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
+  const utf8Bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binary += String.fromCharCode(utf8Bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Builds the `bprint://<RESPONSEURL>` (iPhone/iOS) and `my.bluetoothprint.scheme://<RESPONSEURL>`
+ * (Android) Browser Print deep links that Thermer fetches JSON from.
+ */
+export function buildThermerSchemeUrls(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
+  const jsonObj = buildThermerJsonObject(order, type, shopName, thermalWidth);
+  const encoded = toBase64Url(JSON.stringify(jsonObj));
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin && !window.location.origin.includes('localhost')
+      ? window.location.origin
+      : 'https://mtbites.netlify.app';
+  const responseUrl = `${origin}/api/thermer-print?d=${encoded}`;
+  return {
+    responseUrl,
+    iosUrl: `bprint://${responseUrl}`,
+    androidSchemeUrl: `my.bluetoothprint.scheme://${responseUrl}`
+  };
+}
+
+/**
  * Builds the direct Android `intent://` URI that launches the Thermer / Bluetooth Print
  * app (`mate.bluetoothprint`) with `ACTION_SEND` and `EXTRA_TEXT` populated with the
  * `<BAF>` formatted string.
@@ -784,15 +951,21 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
   });
 
   const baseFile = `${order.number || 'receipt'}-${type}`;
-  const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;';
+  const { iosUrl, androidSchemeUrl } = buildThermerSchemeUrls(order, type, shopName, thermalWidth);
+  const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;text-align:center;';
   overlay.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;">
-      <button id="mt-rcpt-thermer-share" style="${btnStyle}background:#22c55e;color:#052e16;width:100%;font-size:15.5px;box-shadow:0 4px 14px rgba(34,197,94,0.35);">
-        ⚡ Send to Thermer / Bluetooth Print App (Select Thermer)
-      </button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
-        <button id="mt-rcpt-thermer-copy" style="${btnStyle}background:#10b981;color:#052e16;flex:1;">
-          📋 Copy Thermer &lt;BAF&gt; Text
+        <a id="mt-rcpt-ios-bprint" href="${iosUrl}" style="${btnStyle}background:#22c55e;color:#052e16;flex:1;font-size:14.5px;box-shadow:0 4px 14px rgba(34,197,94,0.35);">
+          🍎 iPhone Thermer Print (bprint://)
+        </a>
+        <a id="mt-rcpt-android-scheme" href="${androidSchemeUrl}" style="${btnStyle}background:#10b981;color:#052e16;flex:1;font-size:14.5px;">
+          🤖 Android Browser Print
+        </a>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+        <button id="mt-rcpt-thermer-share" style="${btnStyle}background:#34d399;color:#052e16;flex:1;">
+          📲 Share Text to Thermer App
         </button>
         <button id="mt-rcpt-pdf" style="${btnStyle}background:#fb923c;color:#1a0f06;flex:1;">
           📄 ${thermalWidth} Roll PDF
@@ -811,9 +984,10 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
       </div>
     </div>
     <p id="mt-rcpt-tip" style="color:#e5e7eb;font:600 12px Arial;max-width:440px;text-align:center;margin:2px 0;line-height:1.45;">
-      <strong>How to Print Full-Width 80mm in Thermer:</strong><br/>
-      1️⃣ Tap the green <strong>⚡ Send to Thermer / Bluetooth Print App</strong> button above.<br/>
-      2️⃣ In the Android share menu that pops up, tap the <strong>Thermer / Bluetooth Print</strong> icon — it sends the native <code>&lt;BAF&gt;</code> 48-column receipt straight into Thermer and prints full width!
+      <strong>iPhone &amp; Android 1-Tap Printing via Bluetooth Print (Thermer):</strong><br/>
+      • Enable <strong>Browser Print</strong> inside the Bluetooth Print app settings.<br/>
+      • On <strong>iPhone</strong>: Tap <strong>🍎 iPhone Thermer Print (bprint://)</strong>.<br/>
+      • On <strong>Android</strong>: Tap <strong>🤖 Android Browser Print</strong> or <strong>📲 Share Text to Thermer App</strong>!
     </p>
     <img src="${dataUrl}" alt="Receipt preview" style="width:100%;max-width:${thermalWidth === '58mm' ? 310 : 390}px;background:#fff;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" />
   `;
@@ -826,17 +1000,6 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
     if (res === 'copied') {
       const tip = overlay.querySelector('#mt-rcpt-tip');
       if (tip) tip.innerHTML = '<strong style="color:#4ade80;">✓ Copied &lt;BAF&gt; Receipt Text! Paste it in Thermer to print.</strong>';
-    }
-  };
-
-  overlay.querySelector('#mt-rcpt-thermer-copy').onclick = async () => {
-    const payload = buildThermerString(order, type, shopName, thermalWidth);
-    try {
-      await navigator.clipboard.writeText(payload);
-      const btn = overlay.querySelector('#mt-rcpt-thermer-copy');
-      if (btn) btn.textContent = '✓ Copied! Paste in Thermer';
-    } catch (e) {
-      console.warn(e);
     }
   };
 
@@ -879,7 +1042,23 @@ export async function shareReceiptImage(order, type = 'customer', shopName = 'MT
  * - 'image' (default): Opens the receipt preview hub with Instant Thermer button + PDF + Print
  */
 export function printReceipt(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm', printMode = 'image') {
+  if (printMode === 'thermer-ios') {
+    const { iosUrl } = buildThermerSchemeUrls(order, type, shopName, thermalWidth);
+    window.location.href = iosUrl;
+    return Promise.resolve('thermer-ios');
+  }
+  if (printMode === 'thermer-android-scheme') {
+    const { androidSchemeUrl } = buildThermerSchemeUrls(order, type, shopName, thermalWidth);
+    window.location.href = androidSchemeUrl;
+    return Promise.resolve('thermer-android-scheme');
+  }
   if (printMode === 'thermer') {
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+    if (isIOS) {
+      const { iosUrl } = buildThermerSchemeUrls(order, type, shopName, thermalWidth);
+      window.location.href = iosUrl;
+      return Promise.resolve('thermer-ios');
+    }
     return sendToThermerApp(order, type, shopName, thermalWidth);
   }
   if (printMode === 'pdf') {

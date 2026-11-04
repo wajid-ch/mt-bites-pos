@@ -202,14 +202,16 @@ export default function SettingsView({
               value={mode}
               onChange={e => setMode(e.target.value)}
             >
-              <option value="image">Receipt Preview Hub (Thermer App + 80mm PDF + Direct Print) — Recommended</option>
-              <option value="thermer">Instant Thermer / Bluetooth Print App (mate.bluetoothprint)</option>
+              <option value="image">Receipt Preview Hub (iPhone bprint:// + Android Thermer + 80mm PDF) — Recommended</option>
+              <option value="thermer-ios">Instant iPhone Thermer App (bprint:// Browser Print)</option>
+              <option value="thermer-android-scheme">Instant Android Thermer App (my.bluetoothprint.scheme:// Browser Print)</option>
+              <option value="thermer">Auto-Detect iPhone (bprint://) & Android (Share to Thermer)</option>
               <option value="pdf">Direct 80mm / 58mm Roll PDF Download (Exact Roll Size)</option>
               <option value="browser">Direct Browser Print (Full 100% Width)</option>
               <option value="a4-boost">Direct Print with A4-to-80mm Driver Boost (Large Text)</option>
             </select>
             <small style={{ color: 'var(--muted)', fontSize: '11px', lineHeight: 1.4 }}>
-              Using the <strong>Thermer / Bluetooth Print</strong> app with your <strong>SPEED-X SP-90A (80mm)</strong>? Select <strong>Instant Thermer App</strong> (or tap the green button in Preview Hub) to send native <code>&lt;BAF&gt;</code> ESC/POS commands across all 48 columns of your 80mm roll!
+              Works on both <strong>iPhone (`bprint://`)</strong> and <strong>Android (`my.bluetoothprint.scheme://` / Share)</strong>! Remember to turn on <strong>Browser Print</strong> inside the Bluetooth Print (Thermer) app settings.
             </small>
           </div>
 

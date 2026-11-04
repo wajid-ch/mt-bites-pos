@@ -5,7 +5,9 @@ import {
   receiptDotWidth,
   generateReceiptPdf,
   buildThermerString,
-  buildThermerIntentUrl
+  buildThermerIntentUrl,
+  buildThermerJsonObject,
+  buildThermerSchemeUrls
 } from '../src/receipt.js';
 
 const order = {
@@ -71,6 +73,20 @@ test('buildThermerString formats native <BAF> tags for mate.bluetoothprint acros
 
   const intentUrl = buildThermerIntentUrl(order, 'customer', 'MT Bites', '80mm');
   assert.match(intentUrl, /^intent:#Intent;action=android\.intent\.action\.SEND;type=text\/plain;package=mate\.bluetoothprint;S\.android\.intent\.extra\.TEXT=/);
+});
+
+test('buildThermerJsonObject and buildThermerSchemeUrls format iOS bprint:// and Android my.bluetoothprint.scheme:// JSON_FORCE_OBJECT payloads', () => {
+  const jsonObj = buildThermerJsonObject(order, 'customer', 'MT Bites', '80mm');
+  assert.equal(jsonObj['0'].type, 0);
+  assert.equal(jsonObj['0'].content, 'MT BITES');
+  assert.equal(jsonObj['0'].bold, 1);
+  assert.equal(jsonObj['0'].align, 1);
+  assert.equal(jsonObj['0'].format, 2);
+
+  const { iosUrl, androidSchemeUrl, responseUrl } = buildThermerSchemeUrls(order, 'customer', 'MT Bites', '80mm');
+  assert.match(iosUrl, /^bprint:\/\/https?:\/\/.+\/api\/thermer-print\?d=/);
+  assert.match(androidSchemeUrl, /^my\.bluetoothprint\.scheme:\/\/https?:\/\/.+\/api\/thermer-print\?d=/);
+  assert.ok(responseUrl.includes('/api/thermer-print?d='));
 });
 
 test('printer dot widths match 58mm (384) and 80mm (576) thermal heads', () => {
