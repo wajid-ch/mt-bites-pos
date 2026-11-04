@@ -156,12 +156,14 @@ export function buildThermerIntentUrl(order, type = 'customer', shopName = 'MT B
 
 /**
  * Sends the `<BAF>` formatted receipt directly to the Thermer (`mate.bluetoothprint`)
- * app on Android via Intent URI or Web Share API (`navigator.share({ text })`).
+ * app on Android using the native Web Share API (`navigator.share({ text })`), which
+ * triggers Android's native `Intent.ACTION_SEND` (`text/plain` + `EXTRA_TEXT`) WITHOUT
+ * Chrome redirecting to the Play Store!
  */
-export async function sendToThermerApp(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm', useShareSheet = false) {
+export async function sendToThermerApp(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
   const payload = buildThermerString(order, type, shopName, thermalWidth);
 
-  if (useShareSheet && typeof navigator !== 'undefined' && navigator.share) {
+  if (typeof navigator !== 'undefined' && navigator.share) {
     try {
       await navigator.share({
         text: payload
@@ -169,13 +171,20 @@ export async function sendToThermerApp(order, type = 'customer', shopName = 'MT 
       return 'shared-text';
     } catch (err) {
       if (err?.name === 'AbortError') return 'cancelled';
+      console.warn('navigator.share failed, copying to clipboard instead:', err);
     }
   }
 
-  // Launch direct Android Intent for package `mate.bluetoothprint`
-  const intentUrl = buildThermerIntentUrl(order, type, shopName, thermalWidth);
-  window.location.href = intentUrl;
-  return 'intent-launched';
+  // Fallback if browser doesn't support navigator.share: copy to clipboard
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(payload);
+      return 'copied';
+    } catch (e) {
+      console.warn('Clipboard copy failed:', e);
+    }
+  }
+  return 'unsupported';
 }
 
 /**
@@ -775,16 +784,15 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
   });
 
   const baseFile = `${order.number || 'receipt'}-${type}`;
-  const intentUrl = buildThermerIntentUrl(order, type, shopName, thermalWidth);
   const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;';
   overlay.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;">
-      <a id="mt-rcpt-thermer-intent" href="${intentUrl}" style="${btnStyle}background:#22c55e;color:#052e16;width:100%;font-size:15.5px;box-shadow:0 4px 14px rgba(34,197,94,0.35);">
-        ⚡ Instant Print via Thermer / Bluetooth Print App
-      </a>
+      <button id="mt-rcpt-thermer-share" style="${btnStyle}background:#22c55e;color:#052e16;width:100%;font-size:15.5px;box-shadow:0 4px 14px rgba(34,197,94,0.35);">
+        ⚡ Send to Thermer / Bluetooth Print App (Select Thermer)
+      </button>
       <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
-        <button id="mt-rcpt-thermer-share" style="${btnStyle}background:#10b981;color:#052e16;flex:1;">
-          📲 Share Text to Thermer App
+        <button id="mt-rcpt-thermer-copy" style="${btnStyle}background:#10b981;color:#052e16;flex:1;">
+          📋 Copy Thermer &lt;BAF&gt; Text
         </button>
         <button id="mt-rcpt-pdf" style="${btnStyle}background:#fb923c;color:#1a0f06;flex:1;">
           📄 ${thermalWidth} Roll PDF
@@ -802,9 +810,10 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
         </button>
       </div>
     </div>
-    <p style="color:#e5e7eb;font:600 12px Arial;max-width:440px;text-align:center;margin:2px 0;line-height:1.4;">
-      <strong>Using Thermer (Bluetooth Print) + SPEED-X 80mm:</strong><br/>
-      Tap the green <strong>⚡ Instant Print via Thermer</strong> button above (or <strong>📲 Share Text to Thermer App</strong> and pick <em>Bluetooth Print / Thermer</em>). It sends native ESC/POS <code>&lt;BAF&gt;</code> commands across all 48 columns of your 80mm roll!
+    <p id="mt-rcpt-tip" style="color:#e5e7eb;font:600 12px Arial;max-width:440px;text-align:center;margin:2px 0;line-height:1.45;">
+      <strong>How to Print Full-Width 80mm in Thermer:</strong><br/>
+      1️⃣ Tap the green <strong>⚡ Send to Thermer / Bluetooth Print App</strong> button above.<br/>
+      2️⃣ In the Android share menu that pops up, tap the <strong>Thermer / Bluetooth Print</strong> icon — it sends the native <code>&lt;BAF&gt;</code> 48-column receipt straight into Thermer and prints full width!
     </p>
     <img src="${dataUrl}" alt="Receipt preview" style="width:100%;max-width:${thermalWidth === '58mm' ? 310 : 390}px;background:#fff;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" />
   `;
@@ -813,7 +822,22 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
   overlay.querySelector('#mt-rcpt-close').onclick = () => overlay.remove();
 
   overlay.querySelector('#mt-rcpt-thermer-share').onclick = async () => {
-    await sendToThermerApp(order, type, shopName, thermalWidth, true);
+    const res = await sendToThermerApp(order, type, shopName, thermalWidth);
+    if (res === 'copied') {
+      const tip = overlay.querySelector('#mt-rcpt-tip');
+      if (tip) tip.innerHTML = '<strong style="color:#4ade80;">✓ Copied &lt;BAF&gt; Receipt Text! Paste it in Thermer to print.</strong>';
+    }
+  };
+
+  overlay.querySelector('#mt-rcpt-thermer-copy').onclick = async () => {
+    const payload = buildThermerString(order, type, shopName, thermalWidth);
+    try {
+      await navigator.clipboard.writeText(payload);
+      const btn = overlay.querySelector('#mt-rcpt-thermer-copy');
+      if (btn) btn.textContent = '✓ Copied! Paste in Thermer';
+    } catch (e) {
+      console.warn(e);
+    }
   };
 
   overlay.querySelector('#mt-rcpt-pdf').onclick = () => {
@@ -856,7 +880,7 @@ export async function shareReceiptImage(order, type = 'customer', shopName = 'MT
  */
 export function printReceipt(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm', printMode = 'image') {
   if (printMode === 'thermer') {
-    return sendToThermerApp(order, type, shopName, thermalWidth, false);
+    return sendToThermerApp(order, type, shopName, thermalWidth);
   }
   if (printMode === 'pdf') {
     const baseFile = `${order.number || 'receipt'}-${type}-${thermalWidth}.pdf`;
