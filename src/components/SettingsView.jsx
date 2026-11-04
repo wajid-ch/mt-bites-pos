@@ -202,13 +202,14 @@ export default function SettingsView({
               value={mode}
               onChange={e => setMode(e.target.value)}
             >
-              <option value="image">Receipt Preview Hub (80mm Roll PDF + Direct Print + A4 Boost) — Recommended</option>
+              <option value="image">Receipt Preview Hub (Thermer App + 80mm PDF + Direct Print) — Recommended</option>
+              <option value="thermer">Instant Thermer / Bluetooth Print App (mate.bluetoothprint)</option>
               <option value="pdf">Direct 80mm / 58mm Roll PDF Download (Exact Roll Size)</option>
               <option value="browser">Direct Browser Print (Full 100% Width)</option>
               <option value="a4-boost">Direct Print with A4-to-80mm Driver Boost (Large Text)</option>
             </select>
             <small style={{ color: 'var(--muted)', fontSize: '11px', lineHeight: 1.4 }}>
-              For your <strong>SPEED-X SP-90A (80mm)</strong> printer: use <strong>80mm Roll PDF</strong> or <strong>A4-to-80mm Driver Boost</strong> so the receipt spans edge-to-edge across the entire 80mm paper roll.
+              Using the <strong>Thermer / Bluetooth Print</strong> app with your <strong>SPEED-X SP-90A (80mm)</strong>? Select <strong>Instant Thermer App</strong> (or tap the green button in Preview Hub) to send native <code>&lt;BAF&gt;</code> ESC/POS commands across all 48 columns of your 80mm roll!
             </small>
           </div>
 

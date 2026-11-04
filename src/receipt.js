@@ -4,11 +4,182 @@ import { fmtDate, rs, lineTotal } from './money.js';
 const JsPDF = jspdfModule.jsPDF || jspdfModule.default?.jsPDF || jspdfModule.default;
 
 /**
+ * Generates native ESC/POS markup string for the Android "Thermer / Bluetooth Print"
+ * app (`mate.bluetoothprint`) using its exact `<BAF>Content` tag specification:
+ * - B (Bold): 0 = no, 1 = yes
+ * - A (Align): 0 = left, 1 = center, 2 = right
+ * - F (Format): 0 = normal, 1 = double Height, 2 = double Height + Width, 3 = double Width
+ *
+ * For 80mm thermal printers (SPEED-X SP-90A), standard Font A spans 48 characters per line
+ * (or 32 characters for 58mm printers). Formatting columns across 48 chars prints natively
+ * in the printer's built-in hardware font across 100% of the 80mm roll width!
+ */
+export function buildThermerString(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
+  const kitchen = type === 'kitchen';
+  const is58 = thermalWidth === '58mm';
+  const lineChars = is58 ? 32 : 48; // 48 chars = full 80mm hardware width; 32 chars = full 58mm width
+  const dashLine = '-'.repeat(lineChars);
+  const eqLine = '='.repeat(lineChars);
+
+  const clean = (s) =>
+    String(s ?? '')
+      .replace(/[<>]/g, '')
+      .replace(/·/g, '-')
+      .replace(/×/g, 'x')
+      .trim();
+
+  // Pad left and right text to fill the exact 48-character (80mm) or 32-character (58mm) line
+  const lr = (left, right, width = lineChars) => {
+    const l = clean(left);
+    const r = clean(right);
+    if (!r) return l;
+    const space = width - l.length - r.length;
+    if (space >= 1) {
+      return l + ' '.repeat(space) + r;
+    }
+    // Wrap left text if too long
+    const maxL = Math.max(10, width - r.length - 1);
+    return l.slice(0, maxL) + ' ' + r;
+  };
+
+  // Format 3-column item row: ITEM | QTY | AMOUNT across full 48/32 chars
+  const itemRow = (name, qty, amount, width = lineChars) => {
+    const qStr = `${qty}x`.padEnd(4, ' ');
+    const aStr = clean(amount).padStart(is58 ? 9 : 11, ' ');
+    const nameWidth = width - qStr.length - aStr.length - 1;
+    const cleanName = clean(name);
+    const lines = [];
+    for (let i = 0; i < cleanName.length; i += nameWidth) {
+      const chunk = cleanName.slice(i, i + nameWidth);
+      if (i === 0) {
+        lines.push(qStr + chunk.padEnd(nameWidth, ' ') + ' ' + aStr);
+      } else {
+        lines.push('    ' + chunk);
+      }
+    }
+    return lines.join('\n');
+  };
+
+  const parts = [];
+
+  // 1. Restaurant Header (Bold=1, Align=1 Center, Format=2 Double Height+Width)
+  parts.push(`<112>${clean(shopName || 'MT BITES').toUpperCase()}`);
+  parts.push(`<110>KASHMIR - FAST FOOD POS`);
+  parts.push(`<111>${kitchen ? '[ KITCHEN TICKET ]' : '[ CUSTOMER BILL ]'}`);
+  parts.push(`<100>${eqLine}`);
+
+  // 2. Order Meta (Bold=1, Align=0 Left, Format=0 Normal)
+  parts.push(`<100>${lr(`Order: ${order.number || ''}`, fmtDate(order.createdAt))}`);
+  const typeLabel = `Type: ${order.orderType || 'Dine-in'}${order.tableNumber ? ` (Table ${order.tableNumber})` : ''}`;
+  parts.push(`<100>${lr(typeLabel, order.serverName ? `Staff: ${order.serverName}` : '')}`);
+  if (order.customerName) {
+    parts.push(`<100>Customer: ${clean(order.customerName)}`);
+  }
+  parts.push(`<100>${dashLine}`);
+
+  // 3. Column Headers
+  const hdrQty = 'QTY '.padEnd(4, ' ');
+  const hdrAmt = 'AMOUNT'.padStart(is58 ? 9 : 11, ' ');
+  const hdrItem = 'ITEM'.padEnd(lineChars - hdrQty.length - hdrAmt.length - 1, ' ');
+  parts.push(`<100>${hdrQty}${hdrItem} ${hdrAmt}`);
+  parts.push(`<100>${dashLine}`);
+
+  // 4. Items
+  for (const item of order.items || []) {
+    if (kitchen) {
+      // Extra tall text for kitchen readability (Format=1 Double Height)
+      parts.push(`<101>${itemRow(item.name || 'Item', item.quantity || 1, rs(lineTotal(item)))}`);
+    } else {
+      parts.push(`<100>${itemRow(item.name || 'Item', item.quantity || 1, rs(lineTotal(item)))}`);
+    }
+    if (item.variant && item.variant !== 'Regular') {
+      parts.push(`<000>    Size/Option: ${clean(item.variant)}`);
+    }
+  }
+
+  parts.push(`<100>${dashLine}`);
+
+  // 5. Kitchen Note
+  if (order.note) {
+    parts.push(`<101>NOTE: ${clean(order.note)}`);
+    parts.push(`<100>${dashLine}`);
+  }
+
+  // 6. Totals
+  parts.push(`<100>${lr('Subtotal:', rs(order.subtotal))}`);
+  if (order.discount) {
+    parts.push(`<100>${lr('Discount:', `-${rs(order.discount)}`)}`);
+  }
+  parts.push(`<100>${eqLine}`);
+
+  // Grand Total in Double Height (Format=1)
+  parts.push(`<101>${lr(kitchen ? 'ORDER TOTAL:' : 'NET TOTAL:', rs(order.total))}`);
+  parts.push(`<100>${eqLine}`);
+
+  // 7. Payment Status Banner (Centered, Double Height+Width)
+  const statusBanner = kitchen
+    ? '*** PREPARE ORDER NOW ***'
+    : order.paymentStatus === 'paid'
+      ? '*** CASH PAID ***'
+      : '*** UNPAID ***';
+  parts.push(`<111>${statusBanner}`);
+
+  if (!kitchen && order.paymentStatus === 'paid' && order.cashReceived !== null && order.cashReceived !== undefined) {
+    parts.push(`<100>${lr('Cash Received:', rs(order.cashReceived))}`);
+    parts.push(`<100>${lr('Change Due:', rs(order.change))}`);
+  }
+
+  // 8. Footer
+  parts.push(`<010> `);
+  if (!kitchen) {
+    parts.push(`<110>Thank you for choosing MT Bites!`);
+    parts.push(`<010>Please visit again.`);
+  } else {
+    parts.push(`<110>MT Bites Kitchen Copy - ${order.paymentStatus === 'paid' ? 'PAID' : 'UNPAID'}`);
+  }
+  parts.push(`<010> `);
+  parts.push(`<010> `);
+
+  return parts.join('\n');
+}
+
+/**
+ * Builds the direct Android `intent://` URI that launches the Thermer / Bluetooth Print
+ * app (`mate.bluetoothprint`) with `ACTION_SEND` and `EXTRA_TEXT` populated with the
+ * `<BAF>` formatted string.
+ */
+export function buildThermerIntentUrl(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
+  const payload = buildThermerString(order, type, shopName, thermalWidth);
+  const encodedText = encodeURIComponent(payload);
+  return `intent:#Intent;action=android.intent.action.SEND;type=text/plain;package=mate.bluetoothprint;S.android.intent.extra.TEXT=${encodedText};end`;
+}
+
+/**
+ * Sends the `<BAF>` formatted receipt directly to the Thermer (`mate.bluetoothprint`)
+ * app on Android via Intent URI or Web Share API (`navigator.share({ text })`).
+ */
+export async function sendToThermerApp(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm', useShareSheet = false) {
+  const payload = buildThermerString(order, type, shopName, thermalWidth);
+
+  if (useShareSheet && typeof navigator !== 'undefined' && navigator.share) {
+    try {
+      await navigator.share({
+        text: payload
+      });
+      return 'shared-text';
+    } catch (err) {
+      if (err?.name === 'AbortError') return 'cancelled';
+    }
+  }
+
+  // Launch direct Android Intent for package `mate.bluetoothprint`
+  const intentUrl = buildThermerIntentUrl(order, type, shopName, thermalWidth);
+  window.location.href = intentUrl;
+  return 'intent-launched';
+}
+
+/**
  * Generates full-width HTML for browser printing.
- * IMPORTANT: Never set `max-width: 80mm` or `margin: 0 auto` on `body`!
- * When an OS/mobile printer driver defaults to A4 (210mm) and "Fits to Paper"
- * onto an 80mm thermal roll, restricting `body` to `max-width: 80mm` centered
- * inside a 210mm viewport shrinks the receipt down to ~30mm in the center of the roll!
  * Setting `width: 100%; max-width: none;` guarantees the receipt fills 100% of the paper
  * edge-to-edge whether the driver is set to 80mm Roll or A4 Fit-to-Page.
  */
@@ -246,8 +417,6 @@ export function openReceipt(order, type = 'customer', shopName = 'MT Bites', the
 
 // ==========================================================================
 // EXACT ROLL-SIZE THERMAL PDF GENERATOR (80mm / 58mm Roll PDF)
-// Embeds exact physical paper width (80mm or 58mm) in the PDF MediaBox and
-// renders crisp vector text edge-to-edge across the entire thermal roll.
 // ==========================================================================
 
 function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
@@ -262,7 +431,7 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
   const setFont = (sizePt, style = 'bold') => {
     doc.setFont('helvetica', style);
     doc.setFontSize(sizePt);
-    return sizePt * 0.3528 * 1.32; // mm line height
+    return sizePt * 0.3528 * 1.32;
   };
 
   const centerText = (text, sizePt, style = 'bold') => {
@@ -322,13 +491,11 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
     y += boxH + 2;
   };
 
-  // Header
   centerText(String(shopName || 'MT Bites').toUpperCase(), is58 ? 15 : 18, 'bold');
   centerText('KASHMIR · FAST FOOD POS', is58 ? 8 : 9, 'bold');
   y += 1.2;
   drawBox(kitchen ? 'KITCHEN TICKET' : 'CUSTOMER BILL', is58 ? 10.5 : 12);
 
-  // Meta rows spanning full width
   rowText(`Order: ${order.number || ''}`, fmtDate(order.createdAt), is58 ? 8.5 : 9.5, 'bold');
   rowText(
     `Type: ${order.orderType || ''}${order.tableNumber ? ` · Table ${order.tableNumber}` : ''}`,
@@ -342,7 +509,6 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
 
   drawRule(true, 0.45);
 
-  // Column Header
   const headerSize = is58 ? 8.5 : 9.5;
   const headerLh = setFont(headerSize, 'bold');
   const qtyColX = rightX - (is58 ? 20 : 25);
@@ -354,7 +520,6 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
   y += headerLh;
   drawRule(true, 0.45);
 
-  // Items
   const itemFontSize = is58 ? 9.5 : 11;
   for (const item of order.items || []) {
     const lh = setFont(itemFontSize, 'bold');
@@ -383,13 +548,11 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
 
   drawRule(true, 0.45);
 
-  // Kitchen note
   if (order.note) {
     rowText(`Kitchen Note: ${order.note}`, '', is58 ? 9 : 10, 'bold');
     drawRule(true, 0.45);
   }
 
-  // Totals
   rowText('Subtotal:', rs(order.subtotal), is58 ? 9.5 : 10.5, 'bold');
   if (order.discount) {
     rowText('Discount:', `-${rs(order.discount)}`, is58 ? 9.5 : 10.5, 'bold');
@@ -416,21 +579,15 @@ function drawThermalPdfLayout(doc, draw, paperW, order, type, shopName) {
     centerText(`MT Bites Kitchen Ticket · ${order.paymentStatus === 'paid' ? 'PAID' : 'UNPAID'}`, is58 ? 8.5 : 9.5, 'bold');
   }
 
-  y += 8; // Bottom tear margin
+  y += 8;
   return Math.ceil(y);
 }
 
-/**
- * Builds a jsPDF document locked to the exact thermal roll width (80mm or 58mm)
- * with full-width vector text from left edge to right edge.
- */
 export function generateReceiptPdf(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
   const paperW = thermalWidth === '58mm' ? 58 : 80;
-  // Pass 1: measure exact required roll height
   const measureDoc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [paperW, 250] });
   const requiredH = Math.max(85, drawThermalPdfLayout(measureDoc, false, paperW, order, type, shopName));
 
-  // Pass 2: create exact-dimension roll PDF
   const doc = new JsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -536,13 +693,11 @@ function layoutReceipt(ctx, draw, W, order, type, shopName) {
     y += h + 6 * s;
   };
 
-  // Header
   center(String(shopName || 'MT Bites').toUpperCase(), 38, 900);
   center('KASHMIR · FAST FOOD POS', 18, 700);
   y += 4 * s;
   boxed(kitchen ? 'KITCHEN TICKET' : 'CUSTOMER BILL', 24);
 
-  // Meta
   row(`Order: ${order.number || ''}`, fmtDate(order.createdAt), 20, 800);
   row(
     `Type: ${order.orderType || ''}${order.tableNumber ? ` · Table ${order.tableNumber}` : ''}`,
@@ -588,7 +743,6 @@ function layoutReceipt(ctx, draw, W, order, type, shopName) {
     center(`MT Bites Kitchen Ticket · ${order.paymentStatus === 'paid' ? 'PAID' : 'UNPAID'}`, 18, 700);
   }
 
-  // Extra blank paper at the bottom so the receipt can be torn off cleanly
   y += 32 * s;
   return Math.ceil(y);
 }
@@ -616,40 +770,41 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
   overlay.id = 'mt-receipt-preview';
   Object.assign(overlay.style, {
     position: 'fixed', inset: '0', zIndex: '9999', background: 'rgba(0,0,0,0.88)',
-    display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px',
     overflowY: 'auto', gap: '10px'
   });
 
   const baseFile = `${order.number || 'receipt'}-${type}`;
-  const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;';
+  const intentUrl = buildThermerIntentUrl(order, type, shopName, thermalWidth);
+  const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;';
   overlay.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;">
+      <a id="mt-rcpt-thermer-intent" href="${intentUrl}" style="${btnStyle}background:#22c55e;color:#052e16;width:100%;font-size:15.5px;box-shadow:0 4px 14px rgba(34,197,94,0.35);">
+        ⚡ Instant Print via Thermer / Bluetooth Print App
+      </a>
       <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
-        <button id="mt-rcpt-pdf" style="${btnStyle}background:#fb923c;color:#1a0f06;flex:1.2;">
-          📄 Download ${thermalWidth} Roll PDF (Best for Thermal)
+        <button id="mt-rcpt-thermer-share" style="${btnStyle}background:#10b981;color:#052e16;flex:1;">
+          📲 Share Text to Thermer App
+        </button>
+        <button id="mt-rcpt-pdf" style="${btnStyle}background:#fb923c;color:#1a0f06;flex:1;">
+          📄 ${thermalWidth} Roll PDF
         </button>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
-        <button id="mt-rcpt-print-full" style="${btnStyle}background:#10b981;color:#052e16;flex:1;">
-          🖨️ Direct Print (Full Width)
+        <button id="mt-rcpt-print-full" style="${btnStyle}background:#e5e7eb;color:#111827;flex:1;">
+          🖨️ Browser Print
         </button>
-        <button id="mt-rcpt-print-a4scale" style="${btnStyle}background:#facc15;color:#1a0f06;flex:1;" title="Use this if your printer driver is locked to A4 paper size and shrinks prints">
-          🔍 Print (A4-to-80mm Boost)
+        <button id="mt-rcpt-print-a4scale" style="${btnStyle}background:#facc15;color:#1a0f06;flex:1;">
+          🔍 A4-to-80mm Boost
         </button>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
-        <a id="mt-rcpt-dl" href="${dataUrl}" download="${baseFile}.png" style="${btnStyle}background:#fff;color:#000;text-decoration:none;flex:1;text-align:center;">
-          🖼️ Save PNG Image
-        </a>
-        <button id="mt-rcpt-close" style="${btnStyle}background:#3b332a;color:#fff;flex:1;">
+        <button id="mt-rcpt-close" style="${btnStyle}background:#3b332a;color:#fff;flex:0.7;">
           ✕ Close
         </button>
       </div>
     </div>
-    <p style="color:#e5e7eb;font:600 12.5px Arial;max-width:440px;text-align:center;margin:2px 0;line-height:1.4;">
-      <strong>Using SPEED-X ${thermalWidth} Thermal Printer:</strong><br/>
-      • Tap <strong>Download ${thermalWidth} Roll PDF</strong> to open a PDF locked to exact ${thermalWidth} roll size with edge-to-edge text.<br/>
-      • Or tap <strong>Direct Print (Full Width)</strong> (in printer preferences, set Paper Size to <strong>80mm</strong> or tap <strong>A4-to-80mm Boost</strong> if your driver is stuck on A4).
+    <p style="color:#e5e7eb;font:600 12px Arial;max-width:440px;text-align:center;margin:2px 0;line-height:1.4;">
+      <strong>Using Thermer (Bluetooth Print) + SPEED-X 80mm:</strong><br/>
+      Tap the green <strong>⚡ Instant Print via Thermer</strong> button above (or <strong>📲 Share Text to Thermer App</strong> and pick <em>Bluetooth Print / Thermer</em>). It sends native ESC/POS <code>&lt;BAF&gt;</code> commands across all 48 columns of your 80mm roll!
     </p>
     <img src="${dataUrl}" alt="Receipt preview" style="width:100%;max-width:${thermalWidth === '58mm' ? 310 : 390}px;background:#fff;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" />
   `;
@@ -657,17 +812,16 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
 
   overlay.querySelector('#mt-rcpt-close').onclick = () => overlay.remove();
 
+  overlay.querySelector('#mt-rcpt-thermer-share').onclick = async () => {
+    await sendToThermerApp(order, type, shopName, thermalWidth, true);
+  };
+
   overlay.querySelector('#mt-rcpt-pdf').onclick = () => {
     const doc = generateReceiptPdf(order, type, shopName, thermalWidth);
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
-    // Open PDF in new tab for immediate printing and also trigger download
-    const win = window.open(pdfUrl, '_blank');
-    if (!win) {
-      doc.save(`${baseFile}-${thermalWidth}.pdf`);
-    } else {
-      doc.save(`${baseFile}-${thermalWidth}.pdf`);
-    }
+    window.open(pdfUrl, '_blank');
+    doc.save(`${baseFile}-${thermalWidth}.pdf`);
     setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
   };
 
@@ -681,8 +835,8 @@ function showReceiptImagePreview(dataUrl, order, type, shopName, thermalWidth) {
 }
 
 /**
- * Generates a full-width receipt preview with 1-click 80mm Roll PDF,
- * Full-Width Direct Print, and A4-Driver Boost Print.
+ * Generates a full-width receipt preview with 1-click Thermer App (`mate.bluetoothprint`)
+ * native `<BAF>` printing, 80mm Roll PDF, and Browser Print.
  */
 export async function shareReceiptImage(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
   const canvas = renderReceiptCanvas(order, type, shopName, thermalWidth);
@@ -694,12 +848,16 @@ export async function shareReceiptImage(order, type = 'customer', shopName = 'MT
 /**
  * Main print entry point.
  * Supports:
- * - 'pdf': Immediately generates & opens/downloads exact 80mm/58mm Roll PDF
+ * - 'thermer': Immediately fires Android Intent to `mate.bluetoothprint` with `<BAF>` tags
+ * - 'pdf': Immediately generates & downloads exact 80mm/58mm Roll PDF
  * - 'browser': Direct full-width 100% HTML print
  * - 'a4-boost': Direct HTML print with scaled-up fonts for A4-locked printer drivers
- * - 'image' (default): Opens the receipt preview hub with PDF, Direct Print & A4-Boost buttons
+ * - 'image' (default): Opens the receipt preview hub with Instant Thermer button + PDF + Print
  */
 export function printReceipt(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm', printMode = 'image') {
+  if (printMode === 'thermer') {
+    return sendToThermerApp(order, type, shopName, thermalWidth, false);
+  }
   if (printMode === 'pdf') {
     const baseFile = `${order.number || 'receipt'}-${type}-${thermalWidth}.pdf`;
     const doc = generateReceiptPdf(order, type, shopName, thermalWidth);

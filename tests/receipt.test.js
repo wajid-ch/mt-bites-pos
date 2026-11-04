@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { receiptDocument, receiptDotWidth, generateReceiptPdf } from '../src/receipt.js';
+import {
+  receiptDocument,
+  receiptDotWidth,
+  generateReceiptPdf,
+  buildThermerString,
+  buildThermerIntentUrl
+} from '../src/receipt.js';
 
 const order = {
   number: 'MT-261018-ABC', createdAt: '2026-10-18T12:00:00+05:00',
@@ -49,6 +55,22 @@ test('generateReceiptPdf creates exact 80mm and 58mm roll width PDF documents', 
 
   const doc58 = generateReceiptPdf(order, 'kitchen', 'MT Bites', '58mm');
   assert.equal(Math.round(doc58.internal.pageSize.getWidth()), 58);
+});
+
+test('buildThermerString formats native <BAF> tags for mate.bluetoothprint across 48 chars (80mm) and 32 chars (58mm)', () => {
+  const str80 = buildThermerString(order, 'customer', 'MT Bites', '80mm');
+  assert.match(str80, /<112>MT BITES/);
+  assert.match(str80, /<111>\[ CUSTOMER BILL \]/);
+  assert.match(str80, /Zinger Burger/);
+  assert.match(str80, /Rs\. 650/);
+  assert.match(str80, /={48}/); // 48-char divider for 80mm hardware width
+
+  const str58 = buildThermerString(order, 'kitchen', 'MT Bites', '58mm');
+  assert.match(str58, /<111>\[ KITCHEN TICKET \]/);
+  assert.match(str58, /={32}/); // 32-char divider for 58mm hardware width
+
+  const intentUrl = buildThermerIntentUrl(order, 'customer', 'MT Bites', '80mm');
+  assert.match(intentUrl, /^intent:#Intent;action=android\.intent\.action\.SEND;type=text\/plain;package=mate\.bluetoothprint;S\.android\.intent\.extra\.TEXT=/);
 });
 
 test('printer dot widths match 58mm (384) and 80mm (576) thermal heads', () => {
