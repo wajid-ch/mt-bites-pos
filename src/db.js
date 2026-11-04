@@ -33,7 +33,8 @@ export async function initializeDatabase() {
       await db.products.bulkPut(seedProducts());
       await db.settings.put({ key: 'initialSeedComplete', value: true });
       await db.settings.put({ key: 'shopName', value: 'MT Bites' });
-      await db.settings.put({ key: 'thermalWidth', value: '80mm' });
+      await db.settings.put({ key: 'thermalWidth', value: '58mm' });
+      await db.settings.put({ key: 'printMode', value: 'image' });
     } else {
       // Sync any new menu items from seedProducts without overwriting existing product customizations
       const existing = await db.products.toArray();
@@ -50,6 +51,14 @@ export async function initializeDatabase() {
         if (!p.image || (p.image !== correctImg && correctImg.includes('-'))) {
           await db.products.update(p.id, { image: correctImg });
         }
+      }
+
+      // Upgrade thermal paper default to 58mm + image mode for portable Bluetooth printers
+      const thermalMigrated = await db.settings.get('thermal58mmDefaultV1');
+      if (!thermalMigrated) {
+        await db.settings.put({ key: 'thermalWidth', value: '58mm' });
+        await db.settings.put({ key: 'printMode', value: 'image' });
+        await db.settings.put({ key: 'thermal58mmDefaultV1', value: true });
       }
     }
 

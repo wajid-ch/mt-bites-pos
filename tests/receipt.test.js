@@ -26,3 +26,15 @@ test('receipt HTML safely escapes user-supplied text', () => {
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /&lt;script&gt;/);
 });
+test('58mm receipt uses full paper width, zero page margin and readable font size', () => {
+  const html = receiptDocument(order, 'customer', 'MT Bites', '58mm');
+  assert.match(html, /@page \{ size: 58mm auto; margin: 0; \}/);
+  assert.match(html, /width: 100%/);
+  assert.match(html, /font-size: 14px/);
+  assert.doesNotMatch(html, /width: 50mm/);
+});
+test('printer dot widths match 58mm (384) and 80mm (576) thermal heads', async () => {
+  const { receiptDotWidth } = await import('../src/receipt.js');
+  assert.equal(receiptDotWidth('58mm'), 384);
+  assert.equal(receiptDotWidth('80mm'), 576);
+});

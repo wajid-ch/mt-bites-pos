@@ -6,7 +6,7 @@ import { db, initializeDatabase } from './db.js';
 import { getCachedSession, setCachedSession, hasPermission, logout } from './auth.js';
 import { generateId, generateOrderNumber } from './id.js';
 import { rs, parseAmount, cartSubtotal, cartTotal } from './money.js';
-import { openReceipt } from './receipt.js';
+import { printReceipt } from './receipt.js';
 import {
   isSupabaseConfigured,
   pushOrderToCloud,
@@ -47,7 +47,8 @@ export default function App() {
   const [expenses, setExpenses] = useState([]);
   const [staff, setStaff] = useState([]);
   const [shopName, setShopName] = useState('MT Bites');
-  const [thermalWidth, setThermalWidth] = useState('80mm');
+  const [thermalWidth, setThermalWidth] = useState('58mm');
+  const [printMode, setPrintMode] = useState('image');
 
   // Session & Authentication
   const [currentStaff, setCurrentStaff] = useState(() => getCachedSession());
@@ -109,7 +110,7 @@ export default function App() {
   // Reload all data from local IndexedDB
   const reload = useCallback(async () => {
     try {
-      const [p, o, i, m, e, s, nameSetting, widthSetting] = await Promise.all([
+      const [p, o, i, m, e, s, nameSetting, widthSetting, printModeSetting] = await Promise.all([
         db.products.toArray(),
         db.orders.toArray(),
         db.inventory.toArray(),
@@ -117,7 +118,8 @@ export default function App() {
         db.expenses.toArray(),
         db.staff.toArray(),
         db.settings.get('shopName'),
-        db.settings.get('thermalWidth')
+        db.settings.get('thermalWidth'),
+        db.settings.get('printMode')
       ]);
 
       setProducts(p);
@@ -127,7 +129,8 @@ export default function App() {
       setExpenses(e);
       setStaff(s);
       setShopName(nameSetting?.value || 'MT Bites');
-      setThermalWidth(widthSetting?.value || '80mm');
+      setThermalWidth(widthSetting?.value || '58mm');
+      setPrintMode(printModeSetting?.value || 'image');
     } catch (err) {
       console.error('Failed to reload IndexedDB:', err);
       notify(`Storage error: ${err.message}`);
@@ -401,7 +404,10 @@ export default function App() {
 
   // Receipt printing
   const handlePrintReceipt = (order, type) => {
-    openReceipt(order, type, shopName, thermalWidth);
+    printReceipt(order, type, shopName, thermalWidth, printMode).catch(err => {
+      console.error('Print failed:', err);
+      notify(`Print error: ${err.message}`);
+    });
   };
 
   // Authentication Handlers
@@ -616,6 +622,7 @@ export default function App() {
               orders={orders}
               shopName={shopName}
               thermalWidth={thermalWidth}
+              printMode={printMode}
               onAttempt={attempt}
               onReload={reload}
             />

@@ -20,21 +20,25 @@ export default function SettingsView({
   orders = [],
   shopName = 'MT Bites',
   thermalWidth = '80mm',
+  printMode = 'image',
   onAttempt,
   onReload
 }) {
   const [name, setName] = useState(shopName);
   const [paperWidth, setPaperWidth] = useState(thermalWidth);
+  const [mode, setMode] = useState(printMode);
   const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => setName(shopName), [shopName]);
   useEffect(() => setPaperWidth(thermalWidth), [thermalWidth]);
+  useEffect(() => setMode(printMode), [printMode]);
 
   const handleSaveStoreSettings = async () => {
     if (!name.trim()) return alert('Restaurant name cannot be blank.');
     await onAttempt(async () => {
       await db.settings.put({ key: 'shopName', value: name.trim() });
       await db.settings.put({ key: 'thermalWidth', value: paperWidth });
+      await db.settings.put({ key: 'printMode', value: mode });
     }, 'Store settings saved');
   };
 
@@ -190,6 +194,20 @@ export default function SettingsView({
               <option value="80mm">80mm Thermal Receipt (Standard Counter)</option>
               <option value="58mm">58mm Thermal Receipt (Compact Mobile)</option>
             </select>
+          </div>
+
+          <div className="field">
+            <label>Print Method</label>
+            <select
+              value={mode}
+              onChange={e => setMode(e.target.value)}
+            >
+              <option value="image">Phone + Bluetooth printer app (receipt image) — Recommended</option>
+              <option value="browser">Browser print dialog (PC / USB printer)</option>
+            </select>
+            <small style={{ color: 'var(--muted)', fontSize: '11px', lineHeight: 1.4 }}>
+              If receipts print tiny, choose "Phone + Bluetooth printer app" and set the paper size to match your roll (small rolls are usually 58mm).
+            </small>
           </div>
 
           <button
