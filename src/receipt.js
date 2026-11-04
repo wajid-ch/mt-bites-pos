@@ -144,15 +144,27 @@ export function buildThermerString(order, type = 'customer', shopName = 'MT Bite
 }
 
 /**
- * Builds the `JSON_FORCE_OBJECT` dictionary (`{ "0": { type: 0, content, bold, align, format }, ... }`)
+ * Builds the `JSON_FORCE_OBJECT` dictionary (`{ "000": { type: 0, content, bold, align, format }, ... }`)
  * used by Thermer's Browser Print feature on BOTH:
  * - iPhone / iOS (`bprint://<RESPONSEURL>`)
  * - Android (`my.bluetoothprint.scheme://<RESPONSEURL>`)
+ *
+ * CRITICAL FIXES based on real iPhone Thermer `WEB_PRINT` behavior:
+ * 1. Zero-padded keys (`"000"`, `"001"`, ..., `"010"`): Thermer on iOS sorts dictionary keys
+ *    alphabetically as strings (`"0"`, `"1"`, `"10"`, `"11"`, ..., `"2"`), which previously
+ *    scrambled line 10 (Subtotal/Total) above line 2 (Kitchen Ticket / Items)!
+ *    Zero-padded keys `"000"`, `"001"`, ..., `"025"` guarantee 100% strict top-to-bottom order!
+ * 2. Non-breaking spaces (`\u00A0`): Thermer collapses multiple regular spaces (`'   '`) into a
+ *    single space (`' '`), which squashed left-right columns together (`Subtotal: Rs. 330`).
+ *    Using `\u00A0` preserves exact 2-column & 3-column receipt alignment across all 48 chars!
  */
 export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT Bites', thermalWidth = '80mm') {
   const kitchen = type === 'kitchen';
   const is58 = thermalWidth === '58mm';
-  const lineChars = is58 ? 32 : 48;
+  // Thermer's default line width in WEB_PRINT is 32 chars (58mm) or 42/48 chars (80mm).
+  // Using 32 chars for 58mm and 42 chars for 80mm prevents any line wrapping while keeping columns crisp.
+  const lineChars = is58 ? 32 : 42;
+  const nbsp = '\u00A0';
   const dashLine = '-'.repeat(lineChars);
   const eqLine = '='.repeat(lineChars);
 
@@ -163,28 +175,34 @@ export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT 
       .replace(/×/g, 'x')
       .trim();
 
+  // Pad left and right text with non-breaking spaces (\u00A0) so Thermer never collapses column spacing
   const lr = (left, right, width = lineChars) => {
     const l = clean(left);
     const r = clean(right);
     if (!r) return l;
     const space = width - l.length - r.length;
-    if (space >= 1) return l + ' '.repeat(space) + r;
+    if (space >= 1) return l + nbsp.repeat(space) + r;
     const maxL = Math.max(10, width - r.length - 1);
-    return l.slice(0, maxL) + ' ' + r;
+    return l.slice(0, maxL) + nbsp + r;
   };
 
+  // Format 3-column item row: QTY | ITEM | AMOUNT with \u00A0 column padding
   const itemRow = (name, qty, amount, width = lineChars) => {
-    const qStr = `${qty}x`.padEnd(4, ' ');
-    const aStr = clean(amount).padStart(is58 ? 9 : 11, ' ');
-    const nameWidth = width - qStr.length - aStr.length - 1;
+    const qRaw = `${qty}x`;
+    const qStr = qRaw + nbsp.repeat(Math.max(1, 4 - qRaw.length));
+    const aRaw = clean(amount);
+    const amtColW = is58 ? 9 : 11;
+    const aStr = nbsp.repeat(Math.max(0, amtColW - aRaw.length)) + aRaw;
+    const nameWidth = width - 4 - amtColW - 1;
     const cleanName = clean(name);
     const lines = [];
     for (let i = 0; i < cleanName.length; i += nameWidth) {
       const chunk = cleanName.slice(i, i + nameWidth);
       if (i === 0) {
-        lines.push(qStr + chunk.padEnd(nameWidth, ' ') + ' ' + aStr);
+        const paddedName = chunk + nbsp.repeat(Math.max(0, nameWidth - chunk.length));
+        lines.push(`${qStr}${paddedName}${nbsp}${aStr}`);
       } else {
-        lines.push('    ' + chunk);
+        lines.push(`${nbsp.repeat(4)}${chunk}`);
       }
     }
     return lines;
@@ -199,40 +217,48 @@ export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT 
   addText(clean(shopName || 'MT BITES').toUpperCase(), 1, 1, 2); // Double Height + Width, Centered
   addText('KASHMIR - FAST FOOD POS', 1, 1, 0);
   addText(kitchen ? '[ KITCHEN TICKET ]' : '[ CUSTOMER BILL ]', 1, 1, 1);
-  addText(eqLine, 1, 0, 0);
+  addText(eqLine, 1, 1, 0);
 
-  // 2. Meta
-  addText(lr(`Order: ${order.number || ''}`, fmtDate(order.createdAt)), 1, 0, 0);
-  const typeLabel = `Type: ${order.orderType || 'Dine-in'}${order.tableNumber ? ` (Table ${order.tableNumber})` : ''}`;
-  addText(lr(typeLabel, order.serverName ? `Staff: ${order.serverName}` : ''), 1, 0, 0);
-  if (order.customerName) {
-    addText(`Customer: ${clean(order.customerName)}`, 1, 0, 0);
+  // 2. Meta (Clean separate lines so Order #, Date, Table, and Staff are super clear)
+  addText(lr('Order #:', order.number || ''), 1, 0, 0);
+  addText(lr('Date:', fmtDate(order.createdAt)), 0, 0, 0);
+  const typeVal = `${order.orderType || 'Dine-in'}${order.tableNumber ? ` (Table ${order.tableNumber})` : ''}`;
+  addText(lr('Type:', typeVal), 1, 0, 0);
+  if (order.serverName) {
+    addText(lr('Staff:', order.serverName), 0, 0, 0);
   }
-  addText(dashLine, 1, 0, 0);
+  if (order.customerName) {
+    addText(lr('Customer:', order.customerName), 1, 0, 0);
+  }
+  addText(dashLine, 1, 1, 0);
 
   // 3. Column Header
-  const hdrQty = 'QTY '.padEnd(4, ' ');
-  const hdrAmt = 'AMOUNT'.padStart(is58 ? 9 : 11, ' ');
-  const hdrItem = 'ITEM'.padEnd(lineChars - hdrQty.length - hdrAmt.length - 1, ' ');
-  addText(`${hdrQty}${hdrItem} ${hdrAmt}`, 1, 0, 0);
-  addText(dashLine, 1, 0, 0);
+  const amtColW = is58 ? 9 : 11;
+  const nameColW = lineChars - 4 - amtColW - 1;
+  const hdr =
+    `QTY${nbsp}` +
+    `ITEM${nbsp.repeat(Math.max(0, nameColW - 4))}` +
+    `${nbsp}` +
+    `${nbsp.repeat(Math.max(0, amtColW - 6))}AMOUNT`;
+  addText(hdr, 1, 0, 0);
+  addText(dashLine, 1, 1, 0);
 
   // 4. Items
   for (const item of order.items || []) {
     const lines = itemRow(item.name || 'Item', item.quantity || 1, rs(lineTotal(item)));
     for (const ln of lines) {
-      addText(ln, 1, 0, kitchen ? 1 : 0);
+      addText(ln, 1, 0, 0);
     }
     if (item.variant && item.variant !== 'Regular') {
-      addText(`    Size/Option: ${clean(item.variant)}`, 0, 0, 0);
+      addText(`${nbsp.repeat(4)}(${clean(item.variant)})`, 0, 0, 0);
     }
   }
-  addText(dashLine, 1, 0, 0);
+  addText(dashLine, 1, 1, 0);
 
   // 5. Note
   if (order.note) {
-    addText(`NOTE: ${clean(order.note)}`, 1, 0, 1);
-    addText(dashLine, 1, 0, 0);
+    addText(`KITCHEN NOTE: ${clean(order.note)}`, 1, 0, 0);
+    addText(dashLine, 1, 1, 0);
   }
 
   // 6. Totals
@@ -240,9 +266,9 @@ export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT 
   if (order.discount) {
     addText(lr('Discount:', `-${rs(order.discount)}`), 1, 0, 0);
   }
-  addText(eqLine, 1, 0, 0);
-  addText(lr(kitchen ? 'ORDER TOTAL:' : 'NET TOTAL:', rs(order.total)), 1, 0, 1);
-  addText(eqLine, 1, 0, 0);
+  addText(eqLine, 1, 1, 0);
+  addText(lr(kitchen ? 'ORDER TOTAL:' : 'NET TOTAL:', rs(order.total)), 1, 1, 1);
+  addText(eqLine, 1, 1, 0);
 
   // 7. Payment Status
   const statusBanner = kitchen
@@ -258,7 +284,6 @@ export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT 
   }
 
   // 8. Footer
-  addText(' ', 0, 0, 0);
   if (!kitchen) {
     addText('Thank you for choosing MT Bites!', 1, 1, 0);
     addText('Please visit again.', 0, 1, 0);
@@ -267,10 +292,12 @@ export function buildThermerJsonObject(order, type = 'customer', shopName = 'MT 
   }
   addText(' ', 0, 0, 0);
 
-  // Convert to JSON_FORCE_OBJECT dictionary: { "0": {...}, "1": {...} }
+  // Convert to JSON_FORCE_OBJECT dictionary with zero-padded keys ("000", "001", "002"...)
+  // so alphabetical key sorting in iOS Thermer preserves exact top-to-bottom receipt order!
   const forcedObj = {};
   entries.forEach((entry, idx) => {
-    forcedObj[String(idx)] = entry;
+    const paddedKey = String(idx).padStart(3, '0');
+    forcedObj[paddedKey] = entry;
   });
   return forcedObj;
 }

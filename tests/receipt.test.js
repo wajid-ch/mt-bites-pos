@@ -77,11 +77,17 @@ test('buildThermerString formats native <BAF> tags for mate.bluetoothprint acros
 
 test('buildThermerJsonObject and buildThermerSchemeUrls format iOS bprint:// and Android my.bluetoothprint.scheme:// JSON_FORCE_OBJECT payloads', () => {
   const jsonObj = buildThermerJsonObject(order, 'customer', 'MT Bites', '80mm');
-  assert.equal(jsonObj['0'].type, 0);
-  assert.equal(jsonObj['0'].content, 'MT BITES');
-  assert.equal(jsonObj['0'].bold, 1);
-  assert.equal(jsonObj['0'].align, 1);
-  assert.equal(jsonObj['0'].format, 2);
+  assert.equal(jsonObj['000'].type, 0);
+  assert.equal(jsonObj['000'].content, 'MT BITES');
+  assert.equal(jsonObj['000'].bold, 1);
+  assert.equal(jsonObj['000'].align, 1);
+  assert.equal(jsonObj['000'].format, 2);
+
+  // Verify keys are zero-padded ("000", "001", ..., "010") so alphabetical sorting on iOS preserves strict receipt order
+  const keys = Object.keys(jsonObj);
+  const sortedAlphabetically = [...keys].sort();
+  assert.deepEqual(keys, sortedAlphabetically);
+  assert.match(jsonObj['002'].content, /\[ CUSTOMER BILL \]/);
 
   const { iosUrl, androidSchemeUrl, responseUrl } = buildThermerSchemeUrls(order, 'customer', 'MT Bites', '80mm');
   assert.match(iosUrl, /^bprint:\/\/https?:\/\/.+\/api\/thermer-print\?d=/);
