@@ -33,7 +33,7 @@ export async function initializeDatabase() {
       await db.products.bulkPut(seedProducts());
       await db.settings.put({ key: 'initialSeedComplete', value: true });
       await db.settings.put({ key: 'shopName', value: 'MT Bites' });
-      await db.settings.put({ key: 'thermalWidth', value: '58mm' });
+      await db.settings.put({ key: 'thermalWidth', value: '80mm' });
       await db.settings.put({ key: 'printMode', value: 'image' });
     } else {
       // Sync any new menu items from seedProducts without overwriting existing product customizations
@@ -53,12 +53,11 @@ export async function initializeDatabase() {
         }
       }
 
-      // Upgrade thermal paper default to 58mm + image mode for portable Bluetooth printers
-      const thermalMigrated = await db.settings.get('thermal58mmDefaultV1');
+      // Upgrade thermal paper default to 80mm for SPEED-X SP-90A 80mm thermal printer
+      const thermalMigrated = await db.settings.get('thermal80mmDefaultV2');
       if (!thermalMigrated) {
-        await db.settings.put({ key: 'thermalWidth', value: '58mm' });
-        await db.settings.put({ key: 'printMode', value: 'image' });
-        await db.settings.put({ key: 'thermal58mmDefaultV1', value: true });
+        await db.settings.put({ key: 'thermalWidth', value: '80mm' });
+        await db.settings.put({ key: 'thermal80mmDefaultV2', value: true });
       }
     }
 

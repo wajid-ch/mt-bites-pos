@@ -202,11 +202,13 @@ export default function SettingsView({
               value={mode}
               onChange={e => setMode(e.target.value)}
             >
-              <option value="image">Phone + Bluetooth printer app (receipt image) — Recommended</option>
-              <option value="browser">Browser print dialog (PC / USB printer)</option>
+              <option value="image">Receipt Preview Hub (80mm Roll PDF + Direct Print + A4 Boost) — Recommended</option>
+              <option value="pdf">Direct 80mm / 58mm Roll PDF Download (Exact Roll Size)</option>
+              <option value="browser">Direct Browser Print (Full 100% Width)</option>
+              <option value="a4-boost">Direct Print with A4-to-80mm Driver Boost (Large Text)</option>
             </select>
             <small style={{ color: 'var(--muted)', fontSize: '11px', lineHeight: 1.4 }}>
-              If receipts print tiny, choose "Phone + Bluetooth printer app" and set the paper size to match your roll (small rolls are usually 58mm).
+              For your <strong>SPEED-X SP-90A (80mm)</strong> printer: use <strong>80mm Roll PDF</strong> or <strong>A4-to-80mm Driver Boost</strong> so the receipt spans edge-to-edge across the entire 80mm paper roll.
             </small>
           </div>
 

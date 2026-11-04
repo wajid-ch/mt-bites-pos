@@ -47,7 +47,7 @@ export default function App() {
   const [expenses, setExpenses] = useState([]);
   const [staff, setStaff] = useState([]);
   const [shopName, setShopName] = useState('MT Bites');
-  const [thermalWidth, setThermalWidth] = useState('58mm');
+  const [thermalWidth, setThermalWidth] = useState('80mm');
   const [printMode, setPrintMode] = useState('image');
 
   // Session & Authentication
@@ -129,7 +129,7 @@ export default function App() {
       setExpenses(e);
       setStaff(s);
       setShopName(nameSetting?.value || 'MT Bites');
-      setThermalWidth(widthSetting?.value || '58mm');
+      setThermalWidth(widthSetting?.value || '80mm');
       setPrintMode(printModeSetting?.value || 'image');
     } catch (err) {
       console.error('Failed to reload IndexedDB:', err);
