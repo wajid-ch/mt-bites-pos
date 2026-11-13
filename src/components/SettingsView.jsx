@@ -288,12 +288,12 @@ export default function SettingsView({
               <span>Reset All Test Orders & Expenses (Fresh Start)</span>
             </button>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClearTestOrders}
-                style={{ flex: 1, borderColor: '#7f1d1d', color: '#fca5a5' }}
+                style={{ flex: '1 1 140px', borderColor: '#7f1d1d', color: '#fca5a5' }}
               >
                 <Trash2 size={15} />
                 <span>Clear Orders Only</span>
@@ -302,7 +302,7 @@ export default function SettingsView({
                 type="button"
                 className="btn btn-outline"
                 onClick={handleClearTestExpenses}
-                style={{ flex: 1, borderColor: '#7f1d1d', color: '#fca5a5' }}
+                style={{ flex: '1 1 140px', borderColor: '#7f1d1d', color: '#fca5a5' }}
               >
                 <Trash2 size={15} />
                 <span>Clear Expenses Only</span>

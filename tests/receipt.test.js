@@ -7,7 +7,10 @@ import {
   buildThermerString,
   buildThermerIntentUrl,
   buildThermerJsonObject,
-  buildThermerSchemeUrls
+  buildThermerSchemeUrls,
+  buildInventoryThermerJsonObject,
+  buildInventoryThermerString,
+  generateInventoryPdf
 } from '../src/receipt.js';
 
 const order = {
@@ -98,4 +101,23 @@ test('buildThermerJsonObject and buildThermerSchemeUrls format iOS bprint:// and
 test('printer dot widths match 58mm (384) and 80mm (576) thermal heads', () => {
   assert.equal(receiptDotWidth('58mm'), 384);
   assert.equal(receiptDotWidth('80mm'), 576);
+});
+
+test('inventory thermal print formats Thermer JSON, <BAF> text, and 80mm PDF', () => {
+  const sampleItems = [
+    { id: 'inv-1', name: 'Pepsi (500ml)', unit: 'bottles', quantity: 23, minimum: 6, category: 'Beverages & Cold Drinks' }
+  ];
+  const sampleMovs = [
+    { id: 'mov-1', itemId: 'inv-1', delta: -1, reason: 'Order MT-1', createdAt: '2026-11-13T12:00:00+05:00' }
+  ];
+  const jsonObj = buildInventoryThermerJsonObject(sampleItems, sampleMovs, 'MT Bites', '80mm', 'All');
+  assert.equal(jsonObj['000'].content, 'MT BITES');
+  assert.equal(jsonObj['001'].content, 'INVENTORY & STOCK LOGS');
+
+  const baf = buildInventoryThermerString(sampleItems, sampleMovs, 'MT Bites', '80mm', 'All');
+  assert.match(baf, /Pepsi \(500ml\)/);
+  assert.match(baf, /-1 bottles/);
+
+  const pdf = generateInventoryPdf(sampleItems, sampleMovs, 'MT Bites', '80mm', 'All');
+  assert.equal(Math.round(pdf.internal.pageSize.getWidth()), 80);
 });

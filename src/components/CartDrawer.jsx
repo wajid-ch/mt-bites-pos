@@ -1,11 +1,14 @@
 import React from 'react';
-import { X, Minus, Plus, ShoppingBag, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { X, Minus, Plus, ShoppingBag, ArrowRight, Loader2, AlertCircle, CupSoda } from 'lucide-react';
 import { rs, cartSubtotal, cartTotal, parseAmount } from '../money.js';
 
 export default function CartDrawer({
   isOpen,
   onClose,
   cart = [],
+  drinkInventory = [],
+  extraBottles = [],
+  onAdjustExtraBottle,
   onAdjustCart,
   onClearCart,
   orderType,
@@ -111,6 +114,11 @@ export default function CartDrawer({
                     <span className="cart-item-meta">
                       {item.variant !== 'Regular' ? `${item.variant} · ` : ''}{rs(item.unitPrice)} each
                     </span>
+                    {item.linkedBeverage && (
+                      <span style={{ fontSize: '11px', color: '#86efac', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                        🥤 Deducts: {item.quantity * (item.linkedBeverage.quantityPerItem || 1)}× {item.linkedBeverage.name}
+                      </span>
+                    )}
                     <span className="cart-item-total">
                       {rs(item.unitPrice * item.quantity)}
                     </span>
@@ -146,6 +154,56 @@ export default function CartDrawer({
               </div>
               <h4>Your cart is empty</h4>
               <p>Tap delicious items from the menu to build your order.</p>
+            </div>
+          )}
+
+          {/* Extra Cold Drink Bottle Stock Deduction (for any order) */}
+          {cart.length > 0 && drinkInventory.length > 0 && (
+            <div style={{ marginTop: '12px', padding: '10px 12px', background: '#1b1814', border: '1px solid var(--border)', borderRadius: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: 'var(--accent-light)', marginBottom: '8px' }}>
+                <CupSoda size={14} />
+                <span>Cold Drink Bottles to Deduct from Stock:</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {drinkInventory.map(drink => {
+                  const selected = extraBottles.find(b => b.inventoryId === drink.id);
+                  const qty = selected?.quantity || 0;
+                  return (
+                    <div key={drink.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', fontSize: '12px' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {drink.name}
+                        </strong>
+                        <span style={{ color: drink.quantity <= 0 ? '#f87171' : 'var(--muted)', fontSize: '11px' }}>
+                          {drink.quantity} {drink.unit} left
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          style={{ width: '28px', height: '28px' }}
+                          disabled={qty <= 0}
+                          onClick={() => onAdjustExtraBottle(drink, -1)}
+                          aria-label={`Remove ${drink.name}`}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span style={{ minWidth: '18px', textAlign: 'center', fontWeight: 800 }}>{qty}</span>
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          style={{ width: '28px', height: '28px' }}
+                          onClick={() => onAdjustExtraBottle(drink, 1)}
+                          aria-label={`Add ${drink.name}`}
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 

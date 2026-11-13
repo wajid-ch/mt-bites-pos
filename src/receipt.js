@@ -382,6 +382,392 @@ export async function sendToThermerApp(order, type = 'customer', shopName = 'MT 
 }
 
 /**
+ * Builds the `JSON_FORCE_OBJECT` dictionary (`{ "000": ..., "001": ... }`) for
+ * Inventory + Recent Stock Movement Logs so it prints cleanly via Thermer on
+ * iPhone (`bprint://`) and Android (`my.bluetoothprint.scheme://`).
+ */
+export function buildInventoryThermerJsonObject(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  categoryFilter = 'All'
+) {
+  const is58 = thermalWidth === '58mm';
+  const lineChars = is58 ? 32 : 42;
+  const nbsp = '\u00A0';
+  const dashLine = '-'.repeat(lineChars);
+  const eqLine = '='.repeat(lineChars);
+
+  const clean = (s) =>
+    String(s ?? '')
+      .replace(/[<>]/g, '')
+      .replace(/·/g, '-')
+      .replace(/×/g, 'x')
+      .trim();
+
+  const lr = (left, right, width = lineChars) => {
+    const l = clean(left);
+    const r = clean(right);
+    if (!r) return l;
+    const space = width - l.length - r.length;
+    if (space >= 1) return l + nbsp.repeat(space) + r;
+    const maxL = Math.max(10, width - r.length - 1);
+    return l.slice(0, maxL) + nbsp + r;
+  };
+
+  const entries = [];
+  const addText = (content, bold = 1, align = 0, format = 0) => {
+    entries.push({ type: 0, content: String(content), bold, align, format });
+  };
+
+  const lowCount = items.filter(i => Number(i.quantity || 0) <= Number(i.minimum || 0)).length;
+  addText(clean(shopName || 'MT BITES').toUpperCase(), 1, 1, 2);
+  addText('INVENTORY & STOCK LOGS', 1, 1, 1);
+  addText(eqLine, 1, 1, 0);
+  addText(lr('Printed:', fmtDate(new Date().toISOString())), 0, 0, 0);
+  addText(lr('Category:', categoryFilter || 'All'), 1, 0, 0);
+  addText(lr(`Items: ${items.length}`, `Low Stock: ${lowCount}`), 1, 0, 0);
+  addText(dashLine, 1, 1, 0);
+
+  addText(lr('ITEM', 'STOCK'), 1, 0, 0);
+  addText(dashLine, 1, 1, 0);
+
+  if (items.length === 0) {
+    addText('No items in this category.', 0, 1, 0);
+  } else {
+    for (const item of items) {
+      const qtyNum = Number(item.quantity || 0);
+      const minNum = Number(item.minimum || 0);
+      const tag = qtyNum <= 0 ? ' [OUT]' : qtyNum <= minNum ? ' [LOW]' : '';
+      addText(lr(`${item.name}${tag}`, `${qtyNum} ${item.unit || ''}`), 1, 0, 0);
+    }
+  }
+
+  const byId = new Map(items.map(i => [i.id, i]));
+  const recentMovs = [...movements]
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+    .slice(0, 15);
+
+  addText(eqLine, 1, 1, 0);
+  addText('RECENT STOCK MOVEMENTS', 1, 1, 0);
+  addText(dashLine, 1, 1, 0);
+
+  if (recentMovs.length === 0) {
+    addText('No stock movements recorded.', 0, 1, 0);
+  } else {
+    for (const m of recentMovs) {
+      const itemObj = byId.get(m.itemId);
+      const itemName = itemObj?.name || 'Item';
+      const deltaStr = m.delta > 0 ? `+${m.delta}` : `${m.delta}`;
+      addText(lr(itemName, `${deltaStr} ${itemObj?.unit || ''}`), 1, 0, 0);
+      addText(`  ${clean(m.reason || '')} (${fmtDate(m.createdAt)})`, 0, 0, 0);
+    }
+  }
+
+  addText(eqLine, 1, 1, 0);
+  addText('MT Bites Stock Audit Ticket', 1, 1, 0);
+  addText(' ', 0, 0, 0);
+
+  const forcedObj = {};
+  entries.forEach((entry, idx) => {
+    forcedObj[String(idx).padStart(3, '0')] = entry;
+  });
+  return forcedObj;
+}
+
+/**
+ * Builds `<BAF>` ESC/POS markup string for Android Thermer (`mate.bluetoothprint`)
+ * for Inventory + Recent Stock Movements.
+ */
+export function buildInventoryThermerString(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  categoryFilter = 'All'
+) {
+  const jsonObj = buildInventoryThermerJsonObject(items, movements, shopName, thermalWidth, categoryFilter);
+  return Object.keys(jsonObj)
+    .sort()
+    .map(k => {
+      const e = jsonObj[k];
+      return `<${e.bold ? 1 : 0}${e.align ?? 0}${e.format ?? 0}>${String(e.content || '').replace(/\u00A0/g, ' ')}`;
+    })
+    .join('\n');
+}
+
+export function buildInventoryThermerSchemeUrls(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  categoryFilter = 'All'
+) {
+  const jsonObj = buildInventoryThermerJsonObject(items, movements, shopName, thermalWidth, categoryFilter);
+  const encoded = toBase64Url(JSON.stringify(jsonObj));
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin && !window.location.origin.includes('localhost')
+      ? window.location.origin
+      : 'https://mtbites.netlify.app';
+  const responseUrl = `${origin}/api/thermer-print?d=${encoded}`;
+  return {
+    responseUrl,
+    iosUrl: `bprint://${responseUrl}`,
+    androidSchemeUrl: `my.bluetoothprint.scheme://${responseUrl}`
+  };
+}
+
+export function generateInventoryPdf(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  categoryFilter = 'All'
+) {
+  const paperW = thermalWidth === '58mm' ? 58 : 80;
+  const margin = paperW <= 58 ? 2.5 : 3.5;
+  const innerW = paperW - margin * 2;
+  const rightX = paperW - margin;
+  const centerX = paperW / 2;
+  const is58 = paperW <= 58;
+
+  const drawPass = (doc, draw) => {
+    let y = 5;
+    const setFont = (sizePt, style = 'bold') => {
+      doc.setFont('helvetica', style);
+      doc.setFontSize(sizePt);
+      return sizePt * 0.3528 * 1.32;
+    };
+    const center = (txt, sizePt) => {
+      const lh = setFont(sizePt, 'bold');
+      for (const ln of doc.splitTextToSize(String(txt ?? ''), innerW)) {
+        if (draw) doc.text(ln, centerX, y + lh * 0.78, { align: 'center' });
+        y += lh;
+      }
+    };
+    const row = (left, right = '', sizePt = is58 ? 8.5 : 9.5, style = 'bold') => {
+      const lh = setFont(sizePt, style);
+      const rStr = String(right ?? '');
+      const rW = rStr ? doc.getTextWidth(rStr) + 3 : 0;
+      const lines = doc.splitTextToSize(String(left ?? ''), Math.max(20, innerW - rW));
+      lines.forEach((ln, idx) => {
+        if (draw) {
+          doc.text(ln, margin, y + lh * 0.78, { align: 'left' });
+          if (idx === 0 && rStr) doc.text(rStr, rightX, y + lh * 0.78, { align: 'right' });
+        }
+        y += lh;
+      });
+    };
+    const rule = () => {
+      y += 1.5;
+      if (draw) {
+        doc.setLineWidth(0.45);
+        doc.line(margin, y, rightX, y);
+      }
+      y += 2;
+    };
+
+    center(String(shopName || 'MT Bites').toUpperCase(), is58 ? 14 : 17);
+    center('INVENTORY & STOCK LOGS', is58 ? 10 : 11);
+    rule();
+    row('Printed:', fmtDate(new Date().toISOString()), is58 ? 8 : 9, 'normal');
+    row('Category:', categoryFilter || 'All', is58 ? 8 : 9, 'bold');
+    rule();
+    row('ITEM', 'STOCK', is58 ? 8.5 : 9.5, 'bold');
+    rule();
+    for (const item of items) {
+      const qtyNum = Number(item.quantity || 0);
+      const minNum = Number(item.minimum || 0);
+      const tag = qtyNum <= 0 ? ' [OUT]' : qtyNum <= minNum ? ' [LOW]' : '';
+      row(`${item.name}${tag}`, `${qtyNum} ${item.unit || ''}`, is58 ? 8.5 : 9.5, 'bold');
+    }
+    rule();
+    center('RECENT MOVEMENTS', is58 ? 9 : 10);
+    rule();
+    const byId = new Map(items.map(i => [i.id, i]));
+    const recentMovs = [...movements]
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+      .slice(0, 15);
+    for (const m of recentMovs) {
+      const itemObj = byId.get(m.itemId);
+      const deltaStr = m.delta > 0 ? `+${m.delta}` : `${m.delta}`;
+      row(itemObj?.name || 'Item', `${deltaStr} ${itemObj?.unit || ''}`, is58 ? 8 : 9, 'bold');
+      row(`  ${m.reason || ''} (${fmtDate(m.createdAt)})`, '', is58 ? 7 : 8, 'normal');
+    }
+    y += 8;
+    return Math.ceil(y);
+  };
+
+  const measureDoc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [paperW, 250] });
+  const h = Math.max(85, drawPass(measureDoc, false));
+  const doc = new JsPDF({ orientation: 'portrait', unit: 'mm', format: [paperW, h] });
+  doc.setTextColor(0, 0, 0);
+  doc.setDrawColor(0, 0, 0);
+  drawPass(doc, true);
+  return doc;
+}
+
+export function inventoryDocument(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  categoryFilter = 'All'
+) {
+  const safe = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const is58 = thermalWidth === '58mm';
+  const byId = new Map(items.map(i => [i.id, i]));
+  const recentMovs = [...movements]
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+    .slice(0, 15);
+
+  const itemRows = items.map(i => {
+    const qty = Number(i.quantity || 0);
+    const min = Number(i.minimum || 0);
+    const tag = qty <= 0 ? ' [OUT]' : qty <= min ? ' [LOW]' : '';
+    return `<tr><td><strong>${safe(i.name)}${tag}</strong></td><td class="right">${qty} ${safe(i.unit || '')}</td></tr>`;
+  }).join('');
+
+  const movRows = recentMovs.map(m => {
+    const itemObj = byId.get(m.itemId);
+    const deltaStr = m.delta > 0 ? `+${m.delta}` : `${m.delta}`;
+    return `<tr><td><strong>${safe(itemObj?.name || 'Item')}</strong><div>${safe(m.reason || '')} (${safe(fmtDate(m.createdAt))})</div></td><td class="right"><strong>${deltaStr} ${safe(itemObj?.unit || '')}</strong></td></tr>`;
+  }).join('');
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Inventory Report</title>
+  <style>
+    @page { size: ${is58 ? '58mm auto' : '80mm auto'}; margin: 0; }
+    * { box-sizing: border-box; color: #000 !important; }
+    html, body { margin: 0; padding: 0; width: 100%; background: #fff; font-family: Arial, sans-serif; font-size: ${is58 ? '13px' : '15px'}; font-weight: 700; }
+    body { padding: 2mm 3mm; }
+    body.a4-driver-scale { font-size: 36px; padding: 4mm 6mm; }
+    h1 { margin: 0; text-align: center; font-size: 22px; text-transform: uppercase; }
+    body.a4-driver-scale h1 { font-size: 56px; }
+    .sub { text-align: center; margin-bottom: 6px; }
+    .rule { border-top: 2px dashed #000; margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 3px 1px; vertical-align: top; }
+    td div { font-size: 0.85em; font-weight: 600; }
+    .right { text-align: right; white-space: nowrap; }
+  </style></head><body>
+    <h1>${safe(shopName)}</h1>
+    <div class="sub">INVENTORY &amp; STOCK LOGS<br/>${safe(fmtDate(new Date().toISOString()))} · ${safe(categoryFilter)}</div>
+    <div class="rule"></div>
+    <table>${itemRows || '<tr><td colspan="2">No stock items</td></tr>'}</table>
+    <div class="rule"></div>
+    <div class="sub">RECENT MOVEMENTS (LAST 15)</div>
+    <table>${movRows || '<tr><td colspan="2">No movements recorded</td></tr>'}</table>
+  </body></html>`;
+}
+
+export async function printInventoryReport(
+  items = [],
+  movements = [],
+  shopName = 'MT Bites',
+  thermalWidth = '80mm',
+  printMode = 'image',
+  { categoryFilter = 'All' } = {}
+) {
+  if (printMode === 'thermer-ios') {
+    const { iosUrl } = buildInventoryThermerSchemeUrls(items, movements, shopName, thermalWidth, categoryFilter);
+    window.location.href = iosUrl;
+    return 'thermer-ios';
+  }
+  if (printMode === 'thermer-android-scheme') {
+    const { androidSchemeUrl } = buildInventoryThermerSchemeUrls(items, movements, shopName, thermalWidth, categoryFilter);
+    window.location.href = androidSchemeUrl;
+    return 'thermer-android-scheme';
+  }
+  if (printMode === 'pdf') {
+    const doc = generateInventoryPdf(items, movements, shopName, thermalWidth, categoryFilter);
+    doc.save(`inventory-logs-${thermalWidth}.pdf`);
+    return 'pdf';
+  }
+  if (printMode === 'browser' || printMode === 'a4-boost') {
+    let html = inventoryDocument(items, movements, shopName, thermalWidth, categoryFilter);
+    if (printMode === 'a4-boost') html = html.replace('<body>', '<body class="a4-driver-scale">');
+    const iframe = document.createElement('iframe');
+    Object.assign(iframe.style, { position: 'fixed', width: '0', height: '0', border: '0', visibility: 'hidden' });
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      try { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); } catch (e) { console.error(e); }
+      window.setTimeout(() => iframe.remove(), 120000);
+    };
+    iframe.srcdoc = html;
+    return printMode;
+  }
+
+  // Default: open unified Print Hub overlay with iPhone bprint://, Android Thermer, 80mm PDF & Browser Print
+  document.getElementById('mt-receipt-preview')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'mt-receipt-preview';
+  Object.assign(overlay.style, {
+    position: 'fixed', inset: '0', zIndex: '9999', background: 'rgba(0,0,0,0.88)',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px',
+    overflowY: 'auto', gap: '10px'
+  });
+
+  const { iosUrl, androidSchemeUrl } = buildInventoryThermerSchemeUrls(items, movements, shopName, thermalWidth, categoryFilter);
+  const bafText = buildInventoryThermerString(items, movements, shopName, thermalWidth, categoryFilter);
+  const btnStyle = 'padding:12px 14px;border-radius:10px;border:0;font-weight:800;font-size:14px;min-height:46px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;text-align:center;';
+
+  overlay.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px;">
+      <h3 style="color:#fff;margin:0;text-align:center;font-family:Arial,sans-serif;">Print Inventory &amp; Stock Logs (${thermalWidth})</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+        <a href="${iosUrl}" style="${btnStyle}background:#22c55e;color:#052e16;flex:1;font-size:14.5px;">
+          🍎 iPhone Thermer (bprint://)
+        </a>
+        <a href="${androidSchemeUrl}" style="${btnStyle}background:#10b981;color:#052e16;flex:1;font-size:14.5px;">
+          🤖 Android Browser Print
+        </a>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+        <button id="mt-inv-share" style="${btnStyle}background:#34d399;color:#052e16;flex:1;">
+          📲 Share Text to Thermer App
+        </button>
+        <button id="mt-inv-pdf" style="${btnStyle}background:#fb923c;color:#1a0f06;flex:1;">
+          📄 ${thermalWidth} Roll PDF
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+        <button id="mt-inv-browser" style="${btnStyle}background:#e5e7eb;color:#111827;flex:1;">
+          🖨️ Browser Print
+        </button>
+        <button id="mt-inv-a4" style="${btnStyle}background:#facc15;color:#1a0f06;flex:1;">
+          🔍 A4-to-80mm Boost
+        </button>
+        <button id="mt-inv-close" style="${btnStyle}background:#3b332a;color:#fff;flex:0.7;">
+          ✕ Close
+        </button>
+      </div>
+      <pre style="background:#fff;color:#000;padding:12px;border-radius:8px;font-size:12px;overflow:auto;max-height:55vh;white-space:pre-wrap;">${bafText.replace(/<[01][012][0123]>/g, '')}</pre>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#mt-inv-close').onclick = () => overlay.remove();
+  overlay.querySelector('#mt-inv-share').onclick = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: bafText }); return; } catch {}
+    }
+    if (navigator.clipboard) await navigator.clipboard.writeText(bafText);
+    alert('Copied Thermer <BAF> inventory text to clipboard!');
+  };
+  overlay.querySelector('#mt-inv-pdf').onclick = () => {
+    const doc = generateInventoryPdf(items, movements, shopName, thermalWidth, categoryFilter);
+    const blobUrl = URL.createObjectURL(doc.output('blob'));
+    window.open(blobUrl, '_blank');
+    doc.save(`inventory-logs-${thermalWidth}.pdf`);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  };
+  overlay.querySelector('#mt-inv-browser').onclick = () => printInventoryReport(items, movements, shopName, thermalWidth, 'browser', { categoryFilter });
+  overlay.querySelector('#mt-inv-a4').onclick = () => printInventoryReport(items, movements, shopName, thermalWidth, 'a4-boost', { categoryFilter });
+  return 'preview';
+}
+
+/**
  * Generates full-width HTML for browser printing.
  * Setting `width: 100%; max-width: none;` guarantees the receipt fills 100% of the paper
  * edge-to-edge whether the driver is set to 80mm Roll or A4 Fit-to-Page.

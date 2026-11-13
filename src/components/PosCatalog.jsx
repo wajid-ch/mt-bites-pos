@@ -3,8 +3,15 @@ import { Search, Plus, X, Sparkles, Utensils, AlertCircle } from 'lucide-react';
 import { menuCategories, categoryEmoji, getProductImage } from '../menu.js';
 import { rs } from '../money.js';
 
+export const itemIncludesColdDrink = (product) => {
+  if (!product) return false;
+  const text = `${product.name || ''} ${product.description || ''}`.toLowerCase();
+  return /\b(drink|drinks|bottle|pepsi|coke|cola|7up|sprite|dew|sting|water|mirinda|fanta)\b/i.test(text);
+};
+
 export default function PosCatalog({
   products = [],
+  drinkInventory = [],
   cart = [],
   onAddToCart,
   onOpenVariantPicker,
@@ -132,6 +139,8 @@ export default function PosCatalog({
         <div className="product-grid">
           {activeProducts.map(product => {
             const hasMultipleVariants = product.variants.length > 1;
+            const needsBottleChoice = drinkInventory.length > 0 && itemIncludesColdDrink(product);
+            const openModalFirst = hasMultipleVariants || needsBottleChoice;
             const minPrice = Math.min(...product.variants.map(v => v.price));
             const imgSrc = getProductImage(product);
 
@@ -140,7 +149,7 @@ export default function PosCatalog({
                 key={product.id}
                 className="product-card"
                 onClick={() => {
-                  if (hasMultipleVariants) {
+                  if (openModalFirst) {
                     onOpenVariantPicker(product);
                   } else {
                     onAddToCart(product, product.variants[0]);
@@ -187,7 +196,7 @@ export default function PosCatalog({
                       aria-label={`Add ${product.name}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (hasMultipleVariants) {
+                        if (openModalFirst) {
                           onOpenVariantPicker(product);
                         } else {
                           onAddToCart(product, product.variants[0]);

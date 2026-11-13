@@ -3,6 +3,7 @@ import { Wallet, Plus, X, Check, ReceiptText } from 'lucide-react';
 import { db } from '../db.js';
 import { generateId } from '../id.js';
 import { rs, fmtDate, parseAmount } from '../money.js';
+import { pushExpenseToCloud } from '../supabase.js';
 
 export default function ExpensesView({ expenses = [], onAttempt }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -31,7 +32,10 @@ export default function ExpensesView({ expenses = [], onAttempt }) {
       paymentMethod: 'cash'
     };
 
-    const ok = await onAttempt(() => db.expenses.add(expenseRecord), 'Expense recorded');
+    const ok = await onAttempt(async () => {
+      await db.expenses.add(expenseRecord);
+      await pushExpenseToCloud(expenseRecord);
+    }, 'Expense recorded & synced');
     if (ok) {
       setModalOpen(false);
       setAmountStr('');

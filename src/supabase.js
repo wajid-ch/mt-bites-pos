@@ -131,38 +131,96 @@ export async function deleteStaffFromCloud(staffId) {
 }
 
 // ==========================================
+// OFFLINE-SAFE PENDING CLOUD SYNC OUTBOX
+// ==========================================
+
+const PENDING_SYNC_KEY = 'mt_bites_pending_sync_v1';
+let lastLocalInventoryWriteAt = 0;
+
+export function markLocalInventoryWrite() {
+  lastLocalInventoryWriteAt = Date.now();
+}
+
+export function getLastLocalInventoryWrite() {
+  return lastLocalInventoryWriteAt;
+}
+
+function readPendingSync() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(PENDING_SYNC_KEY);
+      if (raw) return JSON.parse(raw);
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function writePendingSync(queue) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(queue));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function enqueuePendingSync(type, payload) {
+  const queue = readPendingSync();
+  // Deduplicate upserts by (type + id) so the latest version wins
+  const filtered = payload?.id
+    ? queue.filter(q => !(q.type === type && q.payload?.id === payload.id))
+    : queue;
+  filtered.push({ type, payload, queuedAt: new Date().toISOString() });
+  writePendingSync(filtered);
+}
+
+export function getPendingSyncCount() {
+  return readPendingSync().length;
+}
+
+// ==========================================
 // ORDERS SYNCHRONIZATION & REALTIME
 // ==========================================
 
-export async function pushOrderToCloud(order) {
-  if (!supabase) return;
+function mapLocalOrderToCloud(order) {
+  return {
+    id: order.id,
+    number: order.number,
+    created_at: order.createdAt,
+    order_type: order.orderType,
+    table_number: order.tableNumber || null,
+    customer_name: order.customerName || null,
+    server_name: order.serverName || null,
+    server_id: order.serverId || null,
+    note: order.note || null,
+    items: order.items,
+    subtotal: order.subtotal,
+    discount: order.discount,
+    total: order.total,
+    status: order.status,
+    payment_status: order.paymentStatus,
+    payment_method: order.paymentMethod || null,
+    cash_received: order.cashReceived ?? null,
+    change: order.change ?? null,
+    paid_at: order.paidAt || null,
+    cashier_name: order.cashierName || null
+  };
+}
+
+export async function pushOrderToCloud(order, { queueOnFail = true } = {}) {
+  if (!supabase) return { ok: false, reason: 'not-configured' };
   try {
-    const payload = {
-      id: order.id,
-      number: order.number,
-      created_at: order.createdAt,
-      order_type: order.orderType,
-      table_number: order.tableNumber || null,
-      customer_name: order.customerName || null,
-      server_name: order.serverName || null,
-      server_id: order.serverId || null,
-      note: order.note || null,
-      items: order.items,
-      subtotal: order.subtotal,
-      discount: order.discount,
-      total: order.total,
-      status: order.status,
-      payment_status: order.paymentStatus,
-      payment_method: order.paymentMethod || null,
-      cash_received: order.cashReceived || null,
-      change: order.change || null,
-      paid_at: order.paidAt || null,
-      cashier_name: order.cashierName || null
-    };
+    const payload = mapLocalOrderToCloud(order);
     const { error } = await supabase.from('orders').upsert(payload);
     if (error) throw error;
+    return { ok: true };
   } catch (err) {
     console.warn('[Supabase] Order sync to cloud failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('order_upsert', order);
+    return { ok: false, error: err.message };
   }
 }
 
@@ -246,29 +304,199 @@ function mapCloudOrderToLocal(o) {
 }
 
 // ==========================================
-// INVENTORY & EXPENSES SYNC
+// INVENTORY, MOVEMENTS & EXPENSES SYNC
 // ==========================================
 
-export async function pushInventoryToCloud(item) {
-  if (!supabase) return;
+function mapLocalInventoryToCloud(item) {
+  return {
+    id: item.id,
+    name: item.name,
+    unit: item.unit,
+    quantity: Number(item.quantity || 0),
+    minimum: Number(item.minimum || 0),
+    category: item.category || 'Supplies'
+  };
+}
+
+function mapCloudInventoryToLocal(item) {
+  return {
+    id: item.id,
+    name: item.name,
+    unit: item.unit,
+    quantity: Number(item.quantity || 0),
+    minimum: Number(item.minimum || 0),
+    category: item.category || 'Supplies'
+  };
+}
+
+function mapLocalMovementToCloud(m) {
+  return {
+    id: m.id,
+    item_id: m.itemId,
+    delta: Number(m.delta || 0),
+    reason: m.reason || '',
+    created_at: m.createdAt
+  };
+}
+
+function mapCloudMovementToLocal(m) {
+  return {
+    id: m.id,
+    itemId: m.item_id,
+    delta: Number(m.delta || 0),
+    reason: m.reason || '',
+    createdAt: m.created_at
+  };
+}
+
+export async function pushInventoryToCloud(item, { queueOnFail = true } = {}) {
+  markLocalInventoryWrite();
+  if (!supabase) return { ok: false, reason: 'not-configured' };
   try {
-    const { error } = await supabase.from('inventory').upsert(item);
+    const payload = mapLocalInventoryToCloud(item);
+    const { error } = await supabase.from('inventory').upsert(payload);
     if (error) throw error;
+    return { ok: true };
   } catch (err) {
     console.warn('[Supabase] Inventory sync failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('inventory_upsert', item);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function deleteInventoryFromCloud(itemId, { queueOnFail = true } = {}) {
+  if (!supabase) return { ok: false, reason: 'not-configured' };
+  try {
+    const { error: movErr } = await supabase.from('inventory_movements').delete().eq('item_id', itemId);
+    if (movErr) console.warn('[Supabase] Delete movements notice:', movErr.message);
+    const { error } = await supabase.from('inventory').delete().eq('id', itemId);
+    if (error) throw error;
+    return { ok: true };
+  } catch (err) {
+    console.warn('[Supabase] Inventory delete failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('inventory_delete', { id: itemId });
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function clearInventoryFromCloud() {
+  if (!supabase) return { ok: false };
+  try {
+    await supabase.from('inventory_movements').delete().neq('id', 'keep-all');
+    const { error } = await supabase.from('inventory').delete().neq('id', 'keep-all');
+    if (error) throw error;
+    return { ok: true };
+  } catch (err) {
+    console.warn('[Supabase] Clear inventory cloud failed:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Applies a relative stock delta (+restock or -order deduction) against the latest
+ * cloud balance so two waiters on two phones don't overwrite each other's deductions.
+ */
+export async function applyInventoryDeltaCloud(itemId, delta, fallbackItem = null, { queueOnFail = true } = {}) {
+  markLocalInventoryWrite();
+  if (!supabase) return { ok: false, reason: 'not-configured' };
+  try {
+    const { data: current, error: fetchErr } = await supabase
+      .from('inventory')
+      .select('*')
+      .eq('id', itemId)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+
+    const baseQty = current ? Number(current.quantity || 0) : Number(fallbackItem?.quantity ?? 0);
+    const nextQty = current ? Math.max(0, baseQty + Number(delta || 0)) : Math.max(0, baseQty);
+    const payload = current
+      ? { ...current, quantity: nextQty }
+      : mapLocalInventoryToCloud({ ...(fallbackItem || { id: itemId }), quantity: nextQty });
+
+    const { error: upsertErr } = await supabase.from('inventory').upsert(payload);
+    if (upsertErr) throw upsertErr;
+    return { ok: true, quantity: nextQty };
+  } catch (err) {
+    console.warn('[Supabase] Atomic delta sync failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('inventory_delta', { id: itemId, delta, fallbackItem });
+    return { ok: false, error: err.message };
   }
 }
 
 export async function fetchInventoryFromCloud() {
-  if (!supabase) return [];
+  if (!supabase) return null;
   try {
     const { data, error } = await supabase.from('inventory').select('*');
     if (error) throw error;
-    return data || [];
+    return (data || []).map(mapCloudInventoryToLocal);
   } catch (err) {
     console.warn('[Supabase] Fetch inventory failed:', err.message);
-    return [];
+    return null;
   }
+}
+
+export async function pushInventoryMovementToCloud(movement, { queueOnFail = true } = {}) {
+  if (!supabase) return { ok: false, reason: 'not-configured' };
+  try {
+    const payload = mapLocalMovementToCloud(movement);
+    const { error } = await supabase.from('inventory_movements').upsert(payload);
+    if (error) throw error;
+    return { ok: true };
+  } catch (err) {
+    console.warn('[Supabase] Movement sync failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('movement_upsert', movement);
+    return { ok: false, error: err.message };
+  }
+}
+
+export async function fetchInventoryMovementsFromCloud() {
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('inventory_movements')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(300);
+    if (error) throw error;
+    return (data || []).map(mapCloudMovementToLocal);
+  } catch (err) {
+    console.warn('[Supabase] Fetch movements failed:', err.message);
+    return null;
+  }
+}
+
+export function subscribeToRealtimeInventory(onUpsert, onDelete) {
+  if (!supabase) return null;
+  const channel = supabase
+    .channel('public:inventory')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inventory' }, payload => {
+      if (onUpsert && payload.new) onUpsert(mapCloudInventoryToLocal(payload.new));
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'inventory' }, payload => {
+      if (onUpsert && payload.new) onUpsert(mapCloudInventoryToLocal(payload.new));
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'inventory' }, payload => {
+      if (onDelete && payload.old?.id) onDelete(payload.old.id);
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+export function subscribeToRealtimeMovements(onInsert) {
+  if (!supabase) return null;
+  const channel = supabase
+    .channel('public:inventory_movements')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inventory_movements' }, payload => {
+      if (onInsert && payload.new) onInsert(mapCloudMovementToLocal(payload.new));
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
 
 export async function clearTestOrdersCloud() {
@@ -291,8 +519,8 @@ export async function clearTestExpensesCloud() {
   }
 }
 
-export async function pushExpenseToCloud(expense) {
-  if (!supabase) return;
+export async function pushExpenseToCloud(expense, { queueOnFail = true } = {}) {
+  if (!supabase) return { ok: false, reason: 'not-configured' };
   try {
     const payload = {
       id: expense.id,
@@ -304,13 +532,16 @@ export async function pushExpenseToCloud(expense) {
     };
     const { error } = await supabase.from('expenses').upsert(payload);
     if (error) throw error;
+    return { ok: true };
   } catch (err) {
     console.warn('[Supabase] Expense sync failed:', err.message);
+    if (queueOnFail) enqueuePendingSync('expense_upsert', expense);
+    return { ok: false, error: err.message };
   }
 }
 
 export async function fetchExpensesFromCloud() {
-  if (!supabase) return [];
+  if (!supabase) return null;
   try {
     const { data, error } = await supabase.from('expenses').select('*').order('created_at', { ascending: false });
     if (error) throw error;
@@ -324,6 +555,47 @@ export async function fetchExpensesFromCloud() {
     }));
   } catch (err) {
     console.warn('[Supabase] Fetch expenses failed:', err.message);
-    return [];
+    return null;
   }
+}
+
+/**
+ * Flushes any queued offline writes to Supabase in FIFO order.
+ */
+export async function flushPendingSync() {
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { flushed: 0, remaining: getPendingSyncCount() };
+  }
+  const queue = readPendingSync();
+  if (!queue.length) return { flushed: 0, remaining: 0 };
+
+  const remaining = [];
+  let flushed = 0;
+  let lastError = '';
+
+  for (const job of queue) {
+    let res = { ok: false };
+    if (job.type === 'order_upsert') {
+      res = await pushOrderToCloud(job.payload, { queueOnFail: false });
+    } else if (job.type === 'inventory_upsert') {
+      res = await pushInventoryToCloud(job.payload, { queueOnFail: false });
+    } else if (job.type === 'inventory_delete') {
+      res = await deleteInventoryFromCloud(job.payload.id, { queueOnFail: false });
+    } else if (job.type === 'inventory_delta') {
+      res = await applyInventoryDeltaCloud(job.payload.id, job.payload.delta, job.payload.fallbackItem, { queueOnFail: false });
+    } else if (job.type === 'movement_upsert') {
+      res = await pushInventoryMovementToCloud(job.payload, { queueOnFail: false });
+    } else if (job.type === 'expense_upsert') {
+      res = await pushExpenseToCloud(job.payload, { queueOnFail: false });
+    }
+    if (res.ok) {
+      flushed++;
+    } else {
+      if (res.error) lastError = res.error;
+      remaining.push(job);
+    }
+  }
+
+  writePendingSync(remaining);
+  return { flushed, remaining: remaining.length, lastError };
 }

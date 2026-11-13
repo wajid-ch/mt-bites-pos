@@ -1,6 +1,43 @@
 /**
- * Standard inventory items and measurement units tailored for MT Bites restaurant.
+ * Standard inventory categories, cold drink brand/size presets, and measurement
+ * units tailored for MT Bites restaurant.
  */
+export const INVENTORY_CATEGORIES = [
+  'Beverages & Cold Drinks',
+  'Raw Meat',
+  'Dairy & Cheese',
+  'Bakery & Breads',
+  'Sauces & Oils',
+  'Fresh Produce',
+  'Packaging',
+  'Supplies'
+];
+
+export const COLD_DRINK_BRANDS = [
+  'Pepsi',
+  'Coca-Cola',
+  '7Up',
+  'Sprite',
+  'Mountain Dew',
+  'Mirinda',
+  'Fanta',
+  'Sting',
+  'Next Cola',
+  'Mineral Water',
+  'Custom'
+];
+
+export const BOTTLE_SIZES = [
+  '250ml / Regular',
+  '345ml',
+  '500ml',
+  '1L',
+  '1.5L',
+  '2.25L',
+  'Can (250ml)',
+  'Custom'
+];
+
 export const restaurantInventoryTemplates = [
   // Raw Meats & Proteins
   { name: 'Boneless Chicken (Breast/Thigh)', category: 'Raw Meat', unit: 'kg', quantity: 25, minimum: 10 },
